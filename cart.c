@@ -11,6 +11,9 @@
 #define MAX_UNSIGNED_LONG 4294967295
 #define PWM_DC_MAX 2000
 
+_CONFIG1(ICS_PGx2 & JTAGEN_OFF & GCP_OFF & GWRP_OFF & FWDTEN_OFF)
+_CONFIG2(0x7987)
+
 void initRPs(void);
 void initInterrupts(void);
 void initTimers(void);
@@ -42,7 +45,7 @@ int main(void) {
     TRISA = 0x0000;
     TRISB = 0xE000; // RP13|14|15 pour PWM1|int1|2
     
-    setOC4(0);
+    setOC4(PWM_DC_MAX >> 2);
     int value = 60;
     setRightMotorSpeed(value);
     while (1) {

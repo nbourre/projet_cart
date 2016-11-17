@@ -134,14 +134,15 @@ int pwm_ratio = 16;
 unsigned char nc_data[NC_DATA_LENGTH];
 
 int main(void) {
+    initRPs();
     initTRISx();
     initTimers();
-    initRPs();
+    
     initOCx();
     initInterrupts();
     initRxTx();
     
-    lowRangeRatio = 128.0 / (y_mid - y_min);
+    lowRangeRatio = (y_mid - y_min) / 128.0;
     hiRangeRatio = 128.0 / (y_max - y_mid);
 
     
@@ -164,7 +165,7 @@ int main(void) {
     while (1) {
         nunchuckUpdate();
 
-        nunchuckUpdate();
+        //nunchuckUpdate();
 
         nunchuckSendToPC();
         nunchuck = nunchuckConvertRawData(nc_data);
@@ -256,13 +257,14 @@ void setOC4(int val) {
 // OCx --> Output Comparator
 // Voir page 133 pour les config
 void initOCx(void) {
-    OC1CON = 0x000D; // PWM Sur TM2 (bit3) voir page 133
+    OC1CON = 0x000D; // PWM Sur TM3 (bit3) voir page 133
     OC1R = 0;
-    OC1RS = PWM_DC_MAX;
+    OC1RS = 1;
     
     OC4CON = 0x000D; // PWM continue sur timer3
     OC4R = 0;
-    OC4RS = PWM_DC_MAX;
+    OC4RS = 1;
+    
 }
 
 void setOC1(int value) {
@@ -404,7 +406,7 @@ void rightMotorSetSpeed(int value) {
         
     } else {
         // Les deux au max arrête le moteur        
-        _RB12 = 1;
+        _RB12 = 1; // LN2
     }
     
     setOC4 ( pwm );
@@ -488,11 +490,12 @@ void modeCruising() {
     
     
     if (rwValue < nunchuck.jy) {
-        rightMotorSetSpeed(nunchuck.jy);
+        rightMotorSetSpeed(nunchuck.jy * hiRangeRatio);
+        
     }
     
     if (lwValue < nunchuck.jy) {
-        leftMotorSetSpeed(nunchuck.jy);
+        leftMotorSetSpeed(nunchuck.jy * hiRangeRatio);
     }
     
     
@@ -528,8 +531,19 @@ void modeRunning() {
         currentCartState = CRUISECONTROL_MODE;
     }
     
-    rightMotorSetSpeed(nunchuck.jy);
-    leftMotorSetSpeed(nunchuck.jy);
+    
+    if (nunchuck.jy - y_mid < 5 && nunchuck.jy - y_mid > -5 ) {
+        rightMotorStop();
+        leftMotorStop();
+    } else {
+        if (nunchuck.jy > y_mid) {
+            rightMotorSetSpeed(nunchuck.jy * hiRangeRatio);
+            leftMotorSetSpeed(nunchuck.jy * hiRangeRatio);
+        } else {
+            rightMotorSetSpeed(nunchuck.jy * lowRangeRatio);
+            leftMotorSetSpeed(nunchuck.jy * lowRangeRatio);
+        }
+    }
     
     nunchuckSendToPC();
         

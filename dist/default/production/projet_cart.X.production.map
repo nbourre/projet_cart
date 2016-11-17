@@ -1,20 +1,20 @@
 Microchip Technology Inc, v1.26 (A)
 
 Tool Name:
-  c:\program files (x86)\microchip\xc16\v1.26\bin\bin\..\bin/elf-ld.exe
+  /Applications/microchip/xc16/v1.26/bin/bin/../bin/elf-ld
 
 Command:
   -p24FJ64GA002 \
   -o \
   dist/default/production/projet_cart.X.production.elf \
-  -Lc:/program files (x86)/microchip/xc16/v1.26/bin/bin/.. \
-  -Lc:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib \
-  -Lc:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../support/PIC24E/gld \
-  -Lc:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../support/PIC24F/gld \
-  -Lc:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../support/PIC24H/gld \
-  -Lc:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../support/dsPIC30F/gld \
-  -Lc:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../support/dsPIC33E/gld \
-  -Lc:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../support/dsPIC33F/gld \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/.. \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/../../lib \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/../../support/PIC24E/gld \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/../../support/PIC24F/gld \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/../../support/PIC24H/gld \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/../../support/dsPIC30F/gld \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/../../support/dsPIC33E/gld \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/../../support/dsPIC33F/gld \
   build/default/production/cart.o \
   build/default/production/I2C.o \
   --defsym=__MPLAB_BUILD=1 \
@@ -44,34 +44,38 @@ Command:
 Optional library libpPIC24Fxxx.a not found
 Archive member included because of file (symbol)
 
-c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\liblega-pic30-elf.a(crt0_standard.o)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/liblega-pic30-elf.a(crt0_standard.o)
                               (__resetPRI)
-c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\liblega-pic30-elf.a(data_init_standard.o)
-                              c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\liblega-pic30-elf.a(crt0_standard.o) (__data_init_standard)
-c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(divsf3.eo)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/liblega-pic30-elf.a(data_init_standard.o)
+                              /Applications/microchip/xc16/v1.26/bin/bin/../../lib/liblega-pic30-elf.a(crt0_standard.o) (__data_init_standard)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(divsf3.eo)
                               build/default/production/cart.o (___divsf3)
-c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(divsi3.eo)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(divsi3.eo)
                               build/default/production/cart.o (___divsi3)
-c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(floatsisf.eo)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(fixsfsi.eo)
+                              build/default/production/cart.o (_(float, int, long long, short, float, short, int))
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(floatsisf.eo)
                               build/default/production/cart.o (___floatsisf)
-c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(fpack.eo)
-                              c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(divsf3.eo) (__fpack)
-c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(funpack2.eo)
-                              c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(divsf3.eo) (__funpack2)
-c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(futil.eo)
-                              c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(divsf3.eo) (__fPropagateNaN)
-c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(modsi3.eo)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(fpack.eo)
+                              /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(divsf3.eo) (__fpack)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(funpack.eo)
+                              /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(fixsfsi.eo) (__funpack)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(funpack2.eo)
+                              /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(divsf3.eo) (__funpack2)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(futil.eo)
+                              /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(divsf3.eo) (__fPropagateNaN)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(modsi3.eo)
                               build/default/production/cart.o (___modsi3)
-c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(udivsi3.eo)
-                              c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(divsi3.eo) (___udivsi3)
-c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(umodsi3.eo)
-                              c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(modsi3.eo) (___umodsi3)
-c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(floatdisf.eo)
-                              c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(floatsisf.eo) (___floatdisf)
-c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(floatundisf.eo)
-                              c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(floatdisf.eo) (___floatundisf)
-c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(funpack.eo)
-                              c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(funpack2.eo) (__funpack)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(mulsf3.eo)
+                              build/default/production/cart.o (___mulsf3)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(udivsi3.eo)
+                              /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(divsi3.eo) (___udivsi3)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(umodsi3.eo)
+                              /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(modsi3.eo) (___umodsi3)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(floatdisf.eo)
+                              /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(floatsisf.eo) (___floatdisf)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(floatundisf.eo)
+                              /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(floatdisf.eo) (___floatundisf)
 
 
 xc16-ld 1.26 (A)
@@ -80,12 +84,12 @@ Program Memory  [Origin = 0x200, Length = 0xa9fc]
 
 section                    address   length (PC units)   length (bytes) (dec)
 -------                    -------   -----------------   --------------------
-.text                        0x200               0x2c0           0x420  (1056)
-.text                        0x4c0               0x9ca           0xeaf  (3759)
-.dinit                       0xe8a                0x32            0x4b  (75)
-.shared.dinit                0xebc                 0x2             0x3  (3)
+.text                        0x200               0x36a           0x51f  (1311)
+.text                        0x56a               0xa7e           0xfbd  (4029)
+.dinit                       0xfe8                0x32            0x4b  (75)
+.shared.dinit               0x101a                 0x2             0x3  (3)
 
-                 Total program memory used (bytes):         0x131d  (4893) 7%
+                 Total program memory used (bytes):         0x152a  (5418) 8%
 
 
 Ivt Memory  [Origin = 0x4, Length = 0xfc]
@@ -208,130 +212,134 @@ External Symbols in Program Memory (by address):
                   0x0002ac                  __DefaultInterrupt
                   0x0002b0                  ___divsf3
                   0x000334                  ___divsi3
-                  0x000352                  ___floatsisf
-                  0x000358                  __fpack
-                  0x0003a4                  __funpack2
-                  0x0003b4                  __fPropagateNaN
-                  0x0003c6                  __fbopExit
-                  0x0003ce                  __fbopReturnNaN
-                  0x0003d4                  ___modsi3
-                  0x0003f2                  ___udivsi3
-                  0x000412                  ___umodsi3
-                  0x000418                  ___floatdisf
-                  0x000438                  ___floatundisf
-                  0x000496                  __funpack
-                  0x0004c0                  _main
-                  0x00052e                  _initRPs
-                  0x000590                  _initInterrupts
-                  0x0005b4                  _initTimers
-                  0x0005be                  _initTimer1
-                  0x0005da                  _initTimer3
-                  0x0005e8                  _setOC4
-                  0x0005f4                  _initOCx
-                  0x00060e                  _setOC1
-                  0x00061a                  __INT1Interrupt
-                  0x00068a                  __INT2Interrupt
-                  0x0006fa                  __T1Interrupt
-                  0x000782                  _rightMotorSetSpeed
-                  0x0007d6                  _rightMotorGetSpeed
-                  0x0007fa                  _leftMotorGetSpeed
-                  0x00081e                  _rightMotorStop
-                  0x000828                  _leftMotorStop
-                  0x000832                  _leftMotorSetSpeed
-                  0x000886                  _allMotorStop
-                  0x000890                  _modeCruising
-                  0x00090a                  _modeRunning
-                  0x00096c                  _calibrate
-                  0x0009a2                  _modeConfig
-                  0x000aa2                  _manageSystem
-                  0x000ac4                  _Delai
-                  0x000ae0                  _nunchuckInit
-                  0x000b12                  _nunchuckUpdate
-                  0x000b3e                  _nunchuckConvertRawData
-                  0x000bf0                  _sendChar
-                  0x000c08                  _nunchuckSendToPC
-                  0x000c28                  _initRxTx
-                  0x000c3c                  _initTRISx
-                  0x000c4c                  _testLed
-                  0x000c7a                  _itoa
-                  0x000d20                  _sendChars
-                  0x000d70                  _I2C_Acknowledge
-                  0x000d84                  _I2C_Adresse
-                  0x000db6                  _I2C_ConditionArret
-                  0x000dc8                  _I2C_ConditionDemarrage
-                  0x000dda                  _I2C_ConditionRedemarrage
-                  0x000dec                  _I2C_EnvoiOctet
-                  0x000e12                  _I2C_Initialisation
-                  0x000e1e                  _I2C_LireOctet
-                  0x000e34                  _I2C_LireOctets
-                  0x000e76                  _I2C_NotAcknowledge
+                  0x000352                  ___fixsfsi
+                  0x000394                  ___floatsisf
+                  0x00039a                  __fpack
+                  0x0003e6                  __funpack
+                  0x000410                  __funpack2
+                  0x000420                  __fPropagateNaN
+                  0x000432                  __fbopExit
+                  0x00043a                  __fbopReturnNaN
+                  0x000440                  ___modsi3
+                  0x00045e                  ___mulsf3
+                  0x0004c6                  ___udivsi3
+                  0x0004e6                  ___umodsi3
+                  0x0004ec                  ___floatdisf
+                  0x00050c                  ___floatundisf
+                  0x00056a                  _main
+                  0x0005d4                  _initRPs
+                  0x000636                  _initInterrupts
+                  0x00065a                  _initTimers
+                  0x000664                  _initTimer1
+                  0x000680                  _initTimer3
+                  0x00068e                  _setOC4
+                  0x00069a                  _initOCx
+                  0x0006b4                  _setOC1
+                  0x0006c0                  __INT1Interrupt
+                  0x000730                  __INT2Interrupt
+                  0x0007a0                  __T1Interrupt
+                  0x000828                  _rightMotorSetSpeed
+                  0x00087c                  _rightMotorGetSpeed
+                  0x0008a0                  _leftMotorGetSpeed
+                  0x0008c4                  _rightMotorStop
+                  0x0008ce                  _leftMotorStop
+                  0x0008d8                  _leftMotorSetSpeed
+                  0x00092c                  _allMotorStop
+                  0x000936                  _modeCruising
+                  0x0009d8                  _modeRunning
+                  0x000aca                  _calibrate
+                  0x000b00                  _modeConfig
+                  0x000c00                  _manageSystem
+                  0x000c22                  _Delai
+                  0x000c3e                  _nunchuckInit
+                  0x000c70                  _nunchuckUpdate
+                  0x000c9c                  _nunchuckConvertRawData
+                  0x000d4e                  _sendChar
+                  0x000d66                  _nunchuckSendToPC
+                  0x000d86                  _initRxTx
+                  0x000d9a                  _initTRISx
+                  0x000daa                  _testLed
+                  0x000dd8                  _itoa
+                  0x000e7e                  _sendChars
+                  0x000ece                  _I2C_Acknowledge
+                  0x000ee2                  _I2C_Adresse
+                  0x000f14                  _I2C_ConditionArret
+                  0x000f26                  _I2C_ConditionDemarrage
+                  0x000f38                  _I2C_ConditionRedemarrage
+                  0x000f4a                  _I2C_EnvoiOctet
+                  0x000f70                  _I2C_Initialisation
+                  0x000f7c                  _I2C_LireOctet
+                  0x000f92                  _I2C_LireOctets
+                  0x000fd4                  _I2C_NotAcknowledge
 
 External Symbols in Program Memory (by name):
 
-                  0x000ac4                  _Delai
-                  0x000d70                  _I2C_Acknowledge
-                  0x000d84                  _I2C_Adresse
-                  0x000db6                  _I2C_ConditionArret
-                  0x000dc8                  _I2C_ConditionDemarrage
-                  0x000dda                  _I2C_ConditionRedemarrage
-                  0x000dec                  _I2C_EnvoiOctet
-                  0x000e12                  _I2C_Initialisation
-                  0x000e1e                  _I2C_LireOctet
-                  0x000e34                  _I2C_LireOctets
-                  0x000e76                  _I2C_NotAcknowledge
+                  0x000c22                  _Delai
+                  0x000ece                  _I2C_Acknowledge
+                  0x000ee2                  _I2C_Adresse
+                  0x000f14                  _I2C_ConditionArret
+                  0x000f26                  _I2C_ConditionDemarrage
+                  0x000f38                  _I2C_ConditionRedemarrage
+                  0x000f4a                  _I2C_EnvoiOctet
+                  0x000f70                  _I2C_Initialisation
+                  0x000f7c                  _I2C_LireOctet
+                  0x000f92                  _I2C_LireOctets
+                  0x000fd4                  _I2C_NotAcknowledge
                   0x0002ac                  __DefaultInterrupt
-                  0x00061a                  __INT1Interrupt
-                  0x00068a                  __INT2Interrupt
-                  0x0006fa                  __T1Interrupt
+                  0x0006c0                  __INT1Interrupt
+                  0x000730                  __INT2Interrupt
+                  0x0007a0                  __T1Interrupt
                   0x0002b0                  ___divsf3
                   0x000334                  ___divsi3
-                  0x000418                  ___floatdisf
-                  0x000352                  ___floatsisf
-                  0x000438                  ___floatundisf
-                  0x0003d4                  ___modsi3
-                  0x0003f2                  ___udivsi3
-                  0x000412                  ___umodsi3
+                  0x000352                  ___fixsfsi
+                  0x0004ec                  ___floatdisf
+                  0x000394                  ___floatsisf
+                  0x00050c                  ___floatundisf
+                  0x000440                  ___modsi3
+                  0x00045e                  ___mulsf3
+                  0x0004c6                  ___udivsi3
+                  0x0004e6                  ___umodsi3
                   0x00023c                  __data_init
                   0x00023c                  __data_init_standard
-                  0x0003b4                  __fPropagateNaN
-                  0x0003c6                  __fbopExit
-                  0x0003ce                  __fbopReturnNaN
-                  0x000358                  __fpack
-                  0x000496                  __funpack
-                  0x0003a4                  __funpack2
+                  0x000420                  __fPropagateNaN
+                  0x000432                  __fbopExit
+                  0x00043a                  __fbopReturnNaN
+                  0x00039a                  __fpack
+                  0x0003e6                  __funpack
+                  0x000410                  __funpack2
                   0x00022c                  __psv_init
                   0x000200                  __resetPRI
-                  0x000886                  _allMotorStop
-                  0x00096c                  _calibrate
-                  0x000590                  _initInterrupts
-                  0x0005f4                  _initOCx
-                  0x00052e                  _initRPs
-                  0x000c28                  _initRxTx
-                  0x000c3c                  _initTRISx
-                  0x0005be                  _initTimer1
-                  0x0005da                  _initTimer3
-                  0x0005b4                  _initTimers
-                  0x000c7a                  _itoa
-                  0x0007fa                  _leftMotorGetSpeed
-                  0x000832                  _leftMotorSetSpeed
-                  0x000828                  _leftMotorStop
-                  0x0004c0                  _main
-                  0x000aa2                  _manageSystem
-                  0x0009a2                  _modeConfig
-                  0x000890                  _modeCruising
-                  0x00090a                  _modeRunning
-                  0x000b3e                  _nunchuckConvertRawData
-                  0x000ae0                  _nunchuckInit
-                  0x000c08                  _nunchuckSendToPC
-                  0x000b12                  _nunchuckUpdate
-                  0x0007d6                  _rightMotorGetSpeed
-                  0x000782                  _rightMotorSetSpeed
-                  0x00081e                  _rightMotorStop
-                  0x000bf0                  _sendChar
-                  0x000d20                  _sendChars
-                  0x00060e                  _setOC1
-                  0x0005e8                  _setOC4
-                  0x000c4c                  _testLed
+                  0x00092c                  _allMotorStop
+                  0x000aca                  _calibrate
+                  0x000636                  _initInterrupts
+                  0x00069a                  _initOCx
+                  0x0005d4                  _initRPs
+                  0x000d86                  _initRxTx
+                  0x000d9a                  _initTRISx
+                  0x000664                  _initTimer1
+                  0x000680                  _initTimer3
+                  0x00065a                  _initTimers
+                  0x000dd8                  _itoa
+                  0x0008a0                  _leftMotorGetSpeed
+                  0x0008d8                  _leftMotorSetSpeed
+                  0x0008ce                  _leftMotorStop
+                  0x00056a                  _main
+                  0x000c00                  _manageSystem
+                  0x000b00                  _modeConfig
+                  0x000936                  _modeCruising
+                  0x0009d8                  _modeRunning
+                  0x000c9c                  _nunchuckConvertRawData
+                  0x000c3e                  _nunchuckInit
+                  0x000d66                  _nunchuckSendToPC
+                  0x000c70                  _nunchuckUpdate
+                  0x00087c                  _rightMotorGetSpeed
+                  0x000828                  _rightMotorSetSpeed
+                  0x0008c4                  _rightMotorStop
+                  0x000d4e                  _sendChar
+                  0x000e7e                  _sendChars
+                  0x0006b4                  _setOC1
+                  0x00068e                  _setOC4
+                  0x000daa                  _testLed
 
 Memory Configuration
 
@@ -352,7 +360,7 @@ LOAD build/default/production/cart.o
 LOAD build/default/production/I2C.o
                     0x0001                  __MPLAB_BUILD = 0x1
 LOAD pPIC24Fxxx
-LOAD c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libfx-elf.a
+LOAD /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libfx-elf.a
                     0xabfc                  __CONFIG2 = 0xabfc
                     0xabfe                  __CONFIG1 = 0xabfe
                     0x0001                  __NO_HANDLES = 0x1
@@ -369,15 +377,15 @@ LOAD c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libfx-elf.a
                   0x000002          0x2 SHORT 0x0 ((ABSOLUTE (__reset) >> 0x10) & 0x7f)
                   0x000003          0x2 SHORT 0x0
 
-.text             0x000200        0x2c0
+.text             0x000200        0x36a
  *(.init)
- .init            0x000200         0x3c c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\liblega-pic30-elf.a(crt0_standard.o)
-                  0x000200                  __resetPRI
+ .init            0x000200         0x3c /Applications/microchip/xc16/v1.26/bin/bin/../../lib/liblega-pic30-elf.a(crt0_standard.o)
                   0x000200                  __reset
+                  0x000200                  __resetPRI
                   0x00022c                  __psv_init
- .init            0x00023c         0x6c c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\liblega-pic30-elf.a(data_init_standard.o)
-                  0x00023c                  __data_init_standard
+ .init            0x00023c         0x6c /Applications/microchip/xc16/v1.26/bin/bin/../../lib/liblega-pic30-elf.a(data_init_standard.o)
                   0x00023c                  __data_init
+                  0x00023c                  __data_init_standard
  *(.user_init)
  *(.handle)
  *(.isr*)
@@ -387,41 +395,45 @@ LOAD c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libfx-elf.a
  *(.libm)
  *(.libdsp)
  *(.lib*)
- .libm.divfs3     0x0002b0         0x84 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(divsf3.eo)
+ .libm.divfs3     0x0002b0         0x84 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(divsf3.eo)
                   0x0002b0                  ___divsf3
- .libm.divsi3     0x000334         0x1e c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(divsi3.eo)
+ .libm.divsi3     0x000334         0x1e /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(divsi3.eo)
                   0x000334                  ___divsi3
+ .libm.fixsfsi    0x000352         0x42 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(fixsfsi.eo)
+                  0x000352                  _(float, int, long long, short, float, short, int)
  .libm.floatsisf
-                  0x000352          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(floatsisf.eo)
-                  0x000352                  ___floatsisf
- .libm.fpack      0x000358         0x4c c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(fpack.eo)
-                  0x000358                  __fpack
+                  0x000394          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(floatsisf.eo)
+                  0x000394                  ___floatsisf
+ .libm.fpack      0x00039a         0x4c /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(fpack.eo)
+                  0x00039a                  __fpack
+ .libm.funpack    0x0003e6         0x2a /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(funpack.eo)
+                  0x0003e6                  __funpack
  .libm.funpack2
-                  0x0003a4         0x10 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(funpack2.eo)
-                  0x0003a4                  __funpack2
+                  0x000410         0x10 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(funpack2.eo)
+                  0x000410                  __funpack2
  .libm.fPropagateNaN
-                  0x0003b4         0x12 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(futil.eo)
-                  0x0003b4                  __fPropagateNaN
+                  0x000420         0x12 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(futil.eo)
+                  0x000420                  __fPropagateNaN
  .libm.fbobExit
-                  0x0003c6          0x8 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(futil.eo)
-                  0x0003c6                  __fbopExit
+                  0x000432          0x8 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(futil.eo)
+                  0x000432                  __fbopExit
  .libm.fbopReturnNaN
-                  0x0003ce          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(futil.eo)
-                  0x0003ce                  __fbopReturnNaN
- .libm.modsi3     0x0003d4         0x1e c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(modsi3.eo)
-                  0x0003d4                  ___modsi3
- .libm.udivsi3    0x0003f2         0x20 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(udivsi3.eo)
-                  0x0003f2                  ___udivsi3
- .libm.umodsi3    0x000412          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(umodsi3.eo)
-                  0x000412                  ___umodsi3
+                  0x00043a          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(futil.eo)
+                  0x00043a                  __fbopReturnNaN
+ .libm.modsi3     0x000440         0x1e /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(modsi3.eo)
+                  0x000440                  ___modsi3
+ .libm.mulsf3     0x00045e         0x68 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(mulsf3.eo)
+                  0x00045e                  ___mulsf3
+ .libm.udivsi3    0x0004c6         0x20 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(udivsi3.eo)
+                  0x0004c6                  ___udivsi3
+ .libm.umodsi3    0x0004e6          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(umodsi3.eo)
+                  0x0004e6                  ___umodsi3
  .libm.floatdisf
-                  0x000418         0x20 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(floatdisf.eo)
-                  0x000418                  ___floatdisf
+                  0x0004ec         0x20 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(floatdisf.eo)
+                  0x0004ec                  ___floatdisf
  .libm.floatundisf
-                  0x000438         0x5e c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(floatundisf.eo)
-                  0x000438                  ___floatundisf
- .libm.funpack    0x000496         0x2a c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(funpack.eo)
-                  0x000496                  __funpack
+                  0x00050c         0x5e /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(floatundisf.eo)
+                  0x00050c                  ___floatundisf
 
 usercode
  *(usercode)
@@ -437,10 +449,10 @@ __CONFIG1         0x00abfe          0x2
 .comment
  *(.comment)
 
-.debug_info       0x000000       0x28b2
+.debug_info       0x000000       0x28cc
  *(.debug_info)
- .debug_info      0x000000       0x226e build/default/production/cart.o
- .debug_info      0x00226e        0x644 build/default/production/I2C.o
+ .debug_info      0x000000       0x227b build/default/production/cart.o
+ .debug_info      0x00227b        0x651 build/default/production/I2C.o
  *(.gnu.linkonce.wi.*)
 
 .debug_abbrev     0x000000        0x3da
@@ -448,10 +460,10 @@ __CONFIG1         0x00abfe          0x2
  .debug_abbrev    0x000000        0x26c build/default/production/cart.o
  .debug_abbrev    0x00026c        0x16e build/default/production/I2C.o
 
-.debug_line       0x000000        0x2c1
+.debug_line       0x000000        0x2bb
  *(.debug_line)
- .debug_line      0x000000        0x1fb build/default/production/cart.o
- .debug_line      0x0001fb         0xc6 build/default/production/I2C.o
+ .debug_line      0x000000        0x1fe build/default/production/cart.o
+ .debug_line      0x0001fe         0xbd build/default/production/I2C.o
 
 .debug_frame      0x000000        0x546
  *(.debug_frame)
@@ -1063,9 +1075,9 @@ __CONFIG1         0x00abfe          0x2
                     0x0230                  UART2 = 0x230
                     0x0230                  _UART2 = 0x230
 START GROUP
-LOAD c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\liblega-pic30-elf.a
-LOAD c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a
-LOAD c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\liblega-c-elf.a
+LOAD /Applications/microchip/xc16/v1.26/bin/bin/../../lib/liblega-pic30-elf.a
+LOAD /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a
+LOAD /Applications/microchip/xc16/v1.26/bin/bin/../../lib/liblega-c-elf.a
 END GROUP
 OUTPUT(dist/default/production/projet_cart.X.production.elf elf32-pic30)
 LOAD jump_table
@@ -1081,39 +1093,43 @@ LOAD shared_data_init
                   0x000228         0x5a build/default/production/I2C.o
 
 __c30_signature
-                  0x000282         0x60
+                  0x000282         0x6c
  __c30_signature
                   0x000282          0x6 build/default/production/cart.o
  __c30_signature
                   0x000288          0x6 build/default/production/I2C.o
  __c30_signature
-                  0x00028e          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\liblega-pic30-elf.a(crt0_standard.o)
+                  0x00028e          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/liblega-pic30-elf.a(crt0_standard.o)
  __c30_signature
-                  0x000294          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\liblega-pic30-elf.a(data_init_standard.o)
+                  0x000294          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/liblega-pic30-elf.a(data_init_standard.o)
  __c30_signature
-                  0x00029a          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(divsf3.eo)
+                  0x00029a          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(divsf3.eo)
  __c30_signature
-                  0x0002a0          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(divsi3.eo)
+                  0x0002a0          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(divsi3.eo)
  __c30_signature
-                  0x0002a6          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(floatsisf.eo)
+                  0x0002a6          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(fixsfsi.eo)
  __c30_signature
-                  0x0002ac          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(fpack.eo)
+                  0x0002ac          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(floatsisf.eo)
  __c30_signature
-                  0x0002b2          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(funpack2.eo)
+                  0x0002b2          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(fpack.eo)
  __c30_signature
-                  0x0002b8          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(futil.eo)
+                  0x0002b8          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(funpack.eo)
  __c30_signature
-                  0x0002be          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(modsi3.eo)
+                  0x0002be          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(funpack2.eo)
  __c30_signature
-                  0x0002c4          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(udivsi3.eo)
+                  0x0002c4          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(futil.eo)
  __c30_signature
-                  0x0002ca          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(umodsi3.eo)
+                  0x0002ca          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(modsi3.eo)
  __c30_signature
-                  0x0002d0          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(floatdisf.eo)
+                  0x0002d0          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(mulsf3.eo)
  __c30_signature
-                  0x0002d6          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(floatundisf.eo)
+                  0x0002d6          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(udivsi3.eo)
  __c30_signature
-                  0x0002dc          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(funpack.eo)
+                  0x0002dc          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(umodsi3.eo)
+ __c30_signature
+                  0x0002e2          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(floatdisf.eo)
+ __c30_signature
+                  0x0002e8          0x6 /Applications/microchip/xc16/v1.26/bin/bin/../../lib/libm-elf.a(floatundisf.eo)
 
 .nbss               0x0800         0x4c
  .nbss              0x0800         0x4c build/default/production/cart.o
@@ -1179,57 +1195,57 @@ __c30_signature
  .ivt._T1Interrupt
                   0x00001a          0x2 build/default/production/cart.o
 
-.text             0x0004c0        0x9ca
- .text            0x0004c0        0x8b0 build/default/production/cart.o
-                  0x0004c0                  _main
-                  0x00052e                  _initRPs
-                  0x000590                  _initInterrupts
-                  0x0005b4                  _initTimers
-                  0x0005be                  _initTimer1
-                  0x0005da                  _initTimer3
-                  0x0005e8                  _setOC4
-                  0x0005f4                  _initOCx
-                  0x00060e                  _setOC1
-                  0x00061a                  __INT1Interrupt
-                  0x00068a                  __INT2Interrupt
-                  0x0006fa                  __T1Interrupt
-                  0x000782                  _rightMotorSetSpeed
-                  0x0007d6                  _rightMotorGetSpeed
-                  0x0007fa                  _leftMotorGetSpeed
-                  0x00081e                  _rightMotorStop
-                  0x000828                  _leftMotorStop
-                  0x000832                  _leftMotorSetSpeed
-                  0x000886                  _allMotorStop
-                  0x000890                  _modeCruising
-                  0x00090a                  _modeRunning
-                  0x00096c                  _calibrate
-                  0x0009a2                  _modeConfig
-                  0x000aa2                  _manageSystem
-                  0x000ac4                  _Delai
-                  0x000ae0                  _nunchuckInit
-                  0x000b12                  _nunchuckUpdate
-                  0x000b3e                  _nunchuckConvertRawData
-                  0x000bf0                  _sendChar
-                  0x000c08                  _nunchuckSendToPC
-                  0x000c28                  _initRxTx
-                  0x000c3c                  _initTRISx
-                  0x000c4c                  _testLed
-                  0x000c7a                  _itoa
-                  0x000d20                  _sendChars
- .text            0x000d70        0x11a build/default/production/I2C.o
-                  0x000d70                  _I2C_Acknowledge
-                  0x000d84                  _I2C_Adresse
-                  0x000db6                  _I2C_ConditionArret
-                  0x000dc8                  _I2C_ConditionDemarrage
-                  0x000dda                  _I2C_ConditionRedemarrage
-                  0x000dec                  _I2C_EnvoiOctet
-                  0x000e12                  _I2C_Initialisation
-                  0x000e1e                  _I2C_LireOctet
-                  0x000e34                  _I2C_LireOctets
-                  0x000e76                  _I2C_NotAcknowledge
+.text             0x00056a        0xa7e
+ .text            0x00056a        0x964 build/default/production/cart.o
+                  0x00056a                  _main
+                  0x0005d4                  _initRPs
+                  0x000636                  _initInterrupts
+                  0x00065a                  _initTimers
+                  0x000664                  _initTimer1
+                  0x000680                  _initTimer3
+                  0x00068e                  _setOC4
+                  0x00069a                  _initOCx
+                  0x0006b4                  _setOC1
+                  0x0006c0                  __INT1Interrupt
+                  0x000730                  __INT2Interrupt
+                  0x0007a0                  __T1Interrupt
+                  0x000828                  _rightMotorSetSpeed
+                  0x00087c                  _rightMotorGetSpeed
+                  0x0008a0                  _leftMotorGetSpeed
+                  0x0008c4                  _rightMotorStop
+                  0x0008ce                  _leftMotorStop
+                  0x0008d8                  _leftMotorSetSpeed
+                  0x00092c                  _allMotorStop
+                  0x000936                  _modeCruising
+                  0x0009d8                  _modeRunning
+                  0x000aca                  _calibrate
+                  0x000b00                  _modeConfig
+                  0x000c00                  _manageSystem
+                  0x000c22                  _Delai
+                  0x000c3e                  _nunchuckInit
+                  0x000c70                  _nunchuckUpdate
+                  0x000c9c                  _nunchuckConvertRawData
+                  0x000d4e                  _sendChar
+                  0x000d66                  _nunchuckSendToPC
+                  0x000d86                  _initRxTx
+                  0x000d9a                  _initTRISx
+                  0x000daa                  _testLed
+                  0x000dd8                  _itoa
+                  0x000e7e                  _sendChars
+ .text            0x000ece        0x11a build/default/production/I2C.o
+                  0x000ece                  _I2C_Acknowledge
+                  0x000ee2                  _I2C_Adresse
+                  0x000f14                  _I2C_ConditionArret
+                  0x000f26                  _I2C_ConditionDemarrage
+                  0x000f38                  _I2C_ConditionRedemarrage
+                  0x000f4a                  _I2C_EnvoiOctet
+                  0x000f70                  _I2C_Initialisation
+                  0x000f7c                  _I2C_LireOctet
+                  0x000f92                  _I2C_LireOctets
+                  0x000fd4                  _I2C_NotAcknowledge
 
-.dinit            0x000e8a         0x32
- .dinit           0x000e8a         0x32 data_init
+.dinit            0x000fe8         0x32
+ .dinit           0x000fe8         0x32 data_init
 
-.shared.dinit     0x000ebc          0x2
- .shared.dinit    0x000ebc          0x2 shared_data_init
+.shared.dinit     0x00101a          0x2
+ .shared.dinit    0x00101a          0x2 shared_data_init

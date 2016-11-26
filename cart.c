@@ -16,6 +16,7 @@
 #define PWM_DC_MAX 2048
 #define NC_DATA_LENGTH 6
 #define BUFFER_SIZE 12
+#define LOCAL_NUNCHUCK 0
 
 _CONFIG1(ICS_PGx2 & JTAGEN_OFF & GCP_OFF & GWRP_OFF & FWDTEN_OFF)
 _CONFIG2(0x7987)
@@ -29,6 +30,7 @@ typedef enum {
 cartState currentCartState = RUNNING_MODE;        
 
 struct Nunchuck {
+    int active;
     // Axes x, y, z
     int az; 
     int ay;
@@ -83,7 +85,12 @@ void modeCruising(void);
 void modeRunning(void);
 void modeConfig(void);
 void calibrate(void);
+
+void manageInputs(void);
 void manageSystem(void);
+void manageComm(void);
+void manageInterrupts(void);
+
 
 int cruiseControlSpeed = 0;
 int isCruiseControlled = 0;
@@ -106,8 +113,7 @@ int rwValue = 128;
 
 volatile unsigned long nb_ms = 0;
 
-char *textBuffer;
-int isOkToSend = 0;
+
 
 int btnCnZPressTime = 0;
 int btnZPressTime = 0;
@@ -133,11 +139,19 @@ int pwm_ratio = 16;
 // Données de la NC
 unsigned char nc_data[NC_DATA_LENGTH];
 
+// Communication
+unsigned char rxChar;
+int forward = 0;
+char *textBuffer;
+int isOkToSend = 0;
+int commTicks = 0;
+
+
 int main(void) {
     initRPs();
     initTRISx();
     initTimers();
-    
+
     initOCx();
     initInterrupts();
     initRxTx();
@@ -147,33 +161,18 @@ int main(void) {
 
     
     nunchuckInit();
-    
-//    setOC4(PWM_DC_MAX >> 2);
-    //setRightMotorSpeed(127);
-    
-    //OC4RS = PWM_DC_MAX;
-    //_RB13 = 1;
-    _RB6 = 1;
-    _RB7 = 1;
-    
+
     allMotorStop();
-    
-    //_RB10 = 0;
-    //setOC1(PWM_DC_MAX >> 1);
-    //setOC4(PWM_DC_MAX >> 2);
-    
+
     while (1) {
-        nunchuckUpdate();
 
-        //nunchuckUpdate();
-
-        nunchuckSendToPC();
-        nunchuck = nunchuckConvertRawData(nc_data);
+        manageInterrupts();
         
-            
+        manageInputs();
         manageSystem();
-        
-        
+        manageComm();
+
+
     }
     
     return 0;
@@ -296,6 +295,8 @@ void __attribute__((__interrupt__, auto_psv)) _INT1Interrupt(void) {
         }
     }
     
+    
+    
     IFS1bits.INT1IF = 0;
 }
 
@@ -336,6 +337,7 @@ void _ISRFAST __attribute__((auto_psv)) _T1Interrupt(void)
 {
     if(nb_ms > 0)   --nb_ms;
     blinkAcc++;
+    commTicks++;
     
     if (currentCartState == CONFIG_MODE) {
         
@@ -365,6 +367,19 @@ void _ISRFAST __attribute__((auto_psv)) _T1Interrupt(void)
     
     
     _T1IF = 0;
+}
+
+void __attribute__((__interrupt__, no_auto_psv)) _U1RXInterrupt(void)
+{
+    rxChar = U1RXREG;   //Appel la fonction de lecture
+    
+    _RB7 = ~_RB7;
+    
+    if (rxChar == 'w') {
+        forward = ~forward;
+    }
+    
+    _U1RXIF = 0;
 }
 
 /** Set the speed of the motor 
@@ -488,14 +503,14 @@ void modeCruising() {
         currentCartState = RUNNING_MODE;
     }
     
-    
-    if (rwValue < nunchuck.jy) {
-        rightMotorSetSpeed(nunchuck.jy * hiRangeRatio);
-        
-    }
-    
-    if (lwValue < nunchuck.jy) {
-        leftMotorSetSpeed(nunchuck.jy * hiRangeRatio);
+    if (nunchuck.active) {
+        if (rwValue < nunchuck.jy) {
+            rightMotorSetSpeed(nunchuck.jy * hiRangeRatio);
+        }
+
+        if (lwValue < nunchuck.jy) {
+            leftMotorSetSpeed(nunchuck.jy * hiRangeRatio);
+        }
     }
     
     
@@ -531,28 +546,28 @@ void modeRunning() {
         currentCartState = CRUISECONTROL_MODE;
     }
     
+    if (nunchuck.active) {
+        if (nunchuck.jy - y_mid < 5 && nunchuck.jy - y_mid > -5 ) {
+            rightMotorStop();
+            leftMotorStop();
+        } else {
+            if (nunchuck.jy > y_mid) {
+                rightMotorSetSpeed(nunchuck.jy * hiRangeRatio);
+                leftMotorSetSpeed(nunchuck.jy * hiRangeRatio);
+            } else {
+                rightMotorSetSpeed(nunchuck.jy * lowRangeRatio);
+                leftMotorSetSpeed(nunchuck.jy * lowRangeRatio);
+            }
+        }    
+    }
     
-    if (nunchuck.jy - y_mid < 5 && nunchuck.jy - y_mid > -5 ) {
+    if (forward) {
+        rightMotorSetSpeed(200);
+        leftMotorSetSpeed(200);
+    } else {
         rightMotorStop();
         leftMotorStop();
-    } else {
-        if (nunchuck.jy > y_mid) {
-            rightMotorSetSpeed(nunchuck.jy * hiRangeRatio);
-            leftMotorSetSpeed(nunchuck.jy * hiRangeRatio);
-        } else {
-            rightMotorSetSpeed(nunchuck.jy * lowRangeRatio);
-            leftMotorSetSpeed(nunchuck.jy * lowRangeRatio);
-        }
     }
-    
-    nunchuckSendToPC();
-        
-    if (nunchuck.bz) {
-        _RB6 = 1;
-    } else {
-        _RB6 = 0;
-    }
-    
     
 }
 
@@ -580,43 +595,45 @@ void modeConfig() {
     
     int newVal = 0;
     
-    if (nunchuck.jx < x_min) {
-        x_min = nunchuck.jx;
-        newVal = 1;
+    if (nunchuck.active) {
+        if (nunchuck.jx < x_min) {
+            x_min = nunchuck.jx;
+            newVal = 1;
+        }
+
+        if (nunchuck.jx > x_max) {
+            x_max = nunchuck.jx;
+            newVal = 1;
+        }
+
+        if (nunchuck.jy < y_min) {
+            y_min = nunchuck.jy;
+            newVal = 1;
+        }
+
+        if (nunchuck.jy > y_max) {
+            y_max = nunchuck.jy;
+            newVal = 1;
+        }
     }
     
-    if (nunchuck.jx > x_max) {
-        x_max = nunchuck.jx;
-        newVal = 1;
-    }
-    
-    if (nunchuck.jy < y_min) {
-        y_min = nunchuck.jy;
-        newVal = 1;
-    }
-    
-    if (nunchuck.jy > y_max) {
-        y_max = nunchuck.jy;
-        newVal = 1;
-    }
-    
-    if (newVal) {
-        newVal = 0;
-        calibrate();
-        isOkToSend = 1;
-    }
-    
-    if (isOkToSend) {
-        isOkToSend = 0;
-        
-        sendChar('m'); sendChar('i'); sendChar('n'); sendChar('=');
-        textBuffer = itoa(y_min);
-        sendChars();
-        
-        sendChar('m'); sendChar('a'); sendChar('x'); sendChar('=');
-        textBuffer = itoa(y_max);
-        sendChars();
-    }
+//    if (newVal) {
+//        newVal = 0;
+//        calibrate();
+//        isOkToSend = 1;
+//    }
+//    
+//    if (isOkToSend) {
+//        isOkToSend = 0;
+//        
+//        sendChar('m'); sendChar('i'); sendChar('n'); sendChar('=');
+//        textBuffer = itoa(y_min);
+//        sendChars();
+//        
+//        sendChar('m'); sendChar('a'); sendChar('x'); sendChar('=');
+//        textBuffer = itoa(y_max);
+//        sendChars();
+//    }
 }
 
 void manageSystem() {
@@ -635,6 +652,30 @@ void manageSystem() {
     }
 }
 
+void manageInputs() {
+#if LOCAL_NUNCHUCK
+    nunchuckUpdate();
+
+    nunchuckSendToPC();
+
+    nunchuck = nunchuckConvertRawData(nc_data);
+#endif            
+}
+
+void manageComm() {
+    if (commTicks > 999) {
+        commTicks = 0;
+        sendChar('Y');
+        sendChar('\r');
+        sendChar('\n');
+        _RB6 = ~_RB6; // Fonctionne pas 2016-11-20
+    }
+}
+
+void manageInterrupts() {
+
+}
+
 void Delai(int ms)
 {
   nb_ms = ms;
@@ -642,6 +683,8 @@ void Delai(int ms)
 }
 
 void nunchuckInit() {
+    nunchuck.active = LOCAL_NUNCHUCK;
+#if LOCAL_NUNCHUCK
     I2C_Initialisation();
         
     Delai(50);
@@ -658,6 +701,8 @@ void nunchuckInit() {
     I2C_Adresse(0x52, 1);
     I2C_LireOctets(nc_data, NC_DATA_LENGTH);
     I2C_ConditionArret();
+    
+#endif
 }
 
 void nunchuckUpdate() {
@@ -675,7 +720,6 @@ void nunchuckUpdate() {
     I2C_LireOctets(nc_data,6);
     I2C_ConditionArret();
     
-    //nunchuck = nunchuckConvertRawData(nc_data);
 }
 
 struct Nunchuck nunchuckConvertRawData(unsigned char data[6]) {
@@ -710,6 +754,7 @@ void sendChar(unsigned char c)
 }
 
 void nunchuckSendToPC() {
+
     // Communication avec GRAccel.exe
     sendChar(0x5A);
     int i;
@@ -717,26 +762,39 @@ void nunchuckSendToPC() {
     for(i = 0; i < NC_DATA_LENGTH; ++i) {
       sendChar(nc_data[i]);
     }
+
 }
 
 void initRxTx() {
-  // Configuration du port série (UART)
-  U1BRG  = 16;	// BRGH=1 16=115200
-  U1STA  = 0x2000;	// Interruption à chaque caractère reçu
-  U1MODE = 0x8008;	// BRGH = 1
-  
-  U1STAbits.UTXEN = 1;
+#if LOCAL_NUNCHUCK
+    // Configuration du port série (UART)
+    U1BRG  = 16;	// BRGH=1 16=115200
+    U1STA  = 0x2000;	// Interruption à chaque caractère reçu
+    U1MODE = 0x8008;	// BRGH = 1
+
+    U1STAbits.UTXEN = 1;
+#else
+    // Configuration du port série (UART)
+    U1BRG  = 51; // 
+    //U1BRG = 0;
+
+    U1STA  = 0x2000;	// Interruption à chaque caractère reçu
+    U1MODE = 0x8000;    // BRGH = 0
+
+    U1STAbits.UTXEN = 1;
+
+    _U1RXIP = 2; // Priorite
+    _U1RXIF = 0;
+    _U1RXIE = 1; 
+#endif
 }
 
 void initTRISx() {
     AD1PCFG = 0xFFFF;
     TRISA = 0x0000;
     
-    TRISB = 0xC004; // 14|15 pour int1|2 soit encRight, encLeft
-   
-//    TRISBbits.TRISB2  = 1; // RX
-//    TRISBbits.TRISB14 = 1; // encodeur gauche
-//    TRISBbits.TRISB15 = 1; // encodeur droit
+    //TRISB = 0xC004; // 14|15 pour int1|2 soit encRight, encLeft
+    TRISB = 0x0004;
 }
 
 void testLed() {

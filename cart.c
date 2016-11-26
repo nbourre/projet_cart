@@ -9,7 +9,8 @@
 #include <xc.h>
 
 #include "I2C.h"
-//#include "I2C.h"
+#include <stdlib.h>
+
 //#include "nunchuck.h"
 
 #define MAX_UNSIGNED_LONG 4294967295
@@ -17,6 +18,9 @@
 #define NC_DATA_LENGTH 6
 #define BUFFER_SIZE 12
 #define LOCAL_NUNCHUCK 0
+#define SPEED_MAX 256
+#define CRLF sendChar('\r');sendChar('\n');
+
 
 _CONFIG1(ICS_PGx2 & JTAGEN_OFF & GCP_OFF & GWRP_OFF & FWDTEN_OFF)
 _CONFIG2(0x7987)
@@ -69,10 +73,13 @@ void leftMotorSetSpeed(int);
 int leftMotorGetSpeed(void);
 
 void allMotorStop();
+void motorSetRawSpeeds(int);
 
 void sendChar(unsigned char);
 void sendChars();
+void sendValue (long value);
 void testLed(void);
+void putsUART1(unsigned int*);
 
 // prototypes de la NUNCHUCK
 void nunchuckInit(void);
@@ -91,7 +98,6 @@ void manageSystem(void);
 void manageComm(void);
 void manageInterrupts(void);
 
-
 int cruiseControlSpeed = 0;
 int isCruiseControlled = 0;
 int currentGasValue = 0;
@@ -99,21 +105,31 @@ int setNewSpeed = 0;
 
 // Left wheel variables
 volatile long lTicks = 0;
-volatile unsigned long lWheelAcc = 0;
+volatile unsigned long lwAcc = 0;
 volatile unsigned long lwDeltaTime = 0;
 long lwCruiseDT = 0;
-int lwValue = 128;
+int lwCruiseTarget = 128;
+int lwEncoderInt = 0;
+int lwCurrentSpeed = 128;
+int lwAverage = 0;
 
 // Right wheel variables
 volatile long rTicks = 0;
-volatile unsigned long rWheelAcc = 0;
+volatile unsigned long rwAcc = 0;
 volatile unsigned long rwDeltaTime = 0;
 long rwCruiseDT = 0;
-int rwValue = 128;
+int rwCruiseTarget = 128;
+int rwEncoderInt = 0;
+int rwCurrentSpeed = 128;
+int rwAverage = 0; // Moyenne en ms du délai entre 2 ticks à 80%
+
 
 volatile unsigned long nb_ms = 0;
 
-
+// Calibaration var
+int speedCalibFlag = 0;
+int speedCalibAcc = 0;
+int speedCalibDelay = 3000;
 
 int btnCnZPressTime = 0;
 int btnZPressTime = 0;
@@ -273,28 +289,8 @@ void setOC1(int value) {
 /** Interruption sur encodeur gauche */
 void __attribute__((__interrupt__, auto_psv)) _INT1Interrupt(void) {
     // Code ici
-    if (currentCartState == CONFIG_MODE) {
-    
-    } else {
-        lTicks ++;
-        //_RB6 = ~_RB6;    
-        
-        lwDeltaTime = lWheelAcc;
-        lWheelAcc = 0;
-
-        if (isCruiseControlled) {
-            if (lwValue > nunchuck.jy) {
-                if (lwCruiseDT != 0) {
-                    if (lwDeltaTime > lwCruiseDT) {
-                        ++OC1RS;
-                    } else {
-                        --OC1RS;
-                    }        
-                }
-            }
-        }
-    }
-    
+    lwEncoderInt = 1;
+    sendChar('l');
     
     
     IFS1bits.INT1IF = 0;
@@ -302,32 +298,11 @@ void __attribute__((__interrupt__, auto_psv)) _INT1Interrupt(void) {
 
 /** Interruption sur encodeur droit  */
 void __attribute__((__interrupt__, auto_psv)) _INT2Interrupt(void) {
-    // Code ici
+    rwEncoderInt = 1;
+    sendChar('r');
     
-    if (currentCartState == CONFIG_MODE) {
-        
-    } else {
-        //_RB7 = ~_RB7; // Faire clignoter le LED à chaque passage
-        rTicks ++;
-
-        rwDeltaTime = rWheelAcc;
-        rWheelAcc = 0;
-
-        if (isCruiseControlled) {
-            if (rwValue > nunchuck.jy) {
-                if (rwCruiseDT != 0) {
-                    if (rwDeltaTime > rwCruiseDT) {
-                        ++OC4RS;
-                    } else {
-                        --OC4RS;
-                    }        
-                }
-            }
-        }
-
-        //isOkToSend = 1;
-        //rwCruiseSpeed = rwDeltaTime;
-    }
+    // TODO : ÇA N'INTERRUPTE PLUS!!
+   
     
     IFS1bits.INT2IF = 0;
 }
@@ -338,12 +313,13 @@ void _ISRFAST __attribute__((auto_psv)) _T1Interrupt(void)
     if(nb_ms > 0)   --nb_ms;
     blinkAcc++;
     commTicks++;
+    rwAcc++;
+    lwAcc++;
     
     if (currentCartState == CONFIG_MODE) {
-        
-    } else {
-        rWheelAcc++;
-        lWheelAcc++;
+        if (speedCalibFlag) {
+            speedCalibAcc++;
+        }
     }
     
     if (nunchuck.bc && nunchuck.bz) {
@@ -378,6 +354,29 @@ void __attribute__((__interrupt__, no_auto_psv)) _U1RXInterrupt(void)
     if (rxChar == 'w') {
         forward = ~forward;
     }
+    
+    // Mettre en mode config
+    if (rxChar == 'c') {
+        if (currentCartState == CONFIG_MODE ) {
+            currentCartState = RUNNING_MODE;
+        } else {
+            currentCartState = CONFIG_MODE;
+        }
+    }
+    
+    if (currentCartState == CONFIG_MODE ) {
+        if (rxChar == 's') {
+            speedCalibFlag = 1;
+            rTicks = 0;
+            lTicks = 0;
+            rwAcc = 0;
+            lwAcc = 0;
+        }
+    } else if (currentCartState == RUNNING_MODE) {
+        
+    }
+    
+    
     
     _U1RXIF = 0;
 }
@@ -452,6 +451,11 @@ void leftMotorStop() {
     leftMotorSetSpeed(128);
 }
 
+void motorSetRawSpeeds(int value) {
+    rightMotorSetSpeed(value);
+    leftMotorSetSpeed(value);
+}
+
 /** Set the speed of the motor 
  * if value < 127 Rear, 0 <- fast 126 <- slow
  * value > 127 Forward 255 <- fast 128 <- slow
@@ -504,11 +508,11 @@ void modeCruising() {
     }
     
     if (nunchuck.active) {
-        if (rwValue < nunchuck.jy) {
+        if (rwCruiseTarget < nunchuck.jy) {
             rightMotorSetSpeed(nunchuck.jy * hiRangeRatio);
         }
 
-        if (lwValue < nunchuck.jy) {
+        if (lwCruiseTarget < nunchuck.jy) {
             leftMotorSetSpeed(nunchuck.jy * hiRangeRatio);
         }
     }
@@ -538,12 +542,15 @@ void modeRunning() {
         rwCruiseDT = rwDeltaTime;
         lwCruiseDT = lwDeltaTime;
         
-        rwValue = rightMotorGetSpeed();
-        lwValue = leftMotorGetSpeed();
+        rwCruiseTarget = rightMotorGetSpeed();
+        lwCruiseTarget = leftMotorGetSpeed();
         
         
         btnZPressTime = 0;
         currentCartState = CRUISECONTROL_MODE;
+        _RB7 = 1;
+        _RB6 = 0;
+        return;
     }
     
     if (nunchuck.active) {
@@ -583,37 +590,55 @@ void modeConfig() {
         btnCnZPressTime = 0;
         
         currentCartState = RUNNING_MODE;
+        return;
     }
     
-    
-    
+    // Faire clignoter les leds pour indiquer le mode calibration
     if (blinkAcc > 500) {
         blinkAcc = 0;
         _RB7 = ~_RB7;
         _RB6 = ~_RB6;
     }
     
-    int newVal = 0;
+    int dirtyValues = 0;
     
     if (nunchuck.active) {
         if (nunchuck.jx < x_min) {
             x_min = nunchuck.jx;
-            newVal = 1;
+            dirtyValues = 1;
         }
 
         if (nunchuck.jx > x_max) {
             x_max = nunchuck.jx;
-            newVal = 1;
+            dirtyValues = 1;
         }
 
         if (nunchuck.jy < y_min) {
             y_min = nunchuck.jy;
-            newVal = 1;
+            dirtyValues = 1;
         }
 
         if (nunchuck.jy > y_max) {
             y_max = nunchuck.jy;
-            newVal = 1;
+            dirtyValues = 1;
+        }
+    }
+    
+    if (speedCalibFlag) {
+        motorSetRawSpeeds(SPEED_MAX * 0.90);
+        
+        if (speedCalibAcc > speedCalibDelay) {
+            speedCalibFlag = 0;
+            speedCalibAcc = 0;
+            allMotorStop();
+             
+            // Calculer le DT moyen des moteurs
+            rwAverage = (rwDeltaTime * 1.0) / rTicks;
+            lwAverage = (lwDeltaTime * 1.0) / lTicks;
+            
+            isOkToSend = 1;
+            
+            
         }
     }
     
@@ -637,6 +662,10 @@ void modeConfig() {
 }
 
 void manageSystem() {
+    
+    rwCurrentSpeed = rightMotorGetSpeed();
+    lwCurrentSpeed = leftMotorGetSpeed();
+    
     switch (currentCartState) {
         case CRUISECONTROL_MODE:
             modeCruising();
@@ -663,17 +692,90 @@ void manageInputs() {
 }
 
 void manageComm() {
-    if (commTicks > 999) {
-        commTicks = 0;
-        sendChar('Y');
-        sendChar('\r');
-        sendChar('\n');
-        _RB6 = ~_RB6; // Fonctionne pas 2016-11-20
+    if (currentCartState == CONFIG_MODE) {
+        if (isOkToSend) {
+            isOkToSend = 0;
+            
+            sendChar('r');
+            sendChar('w');
+            sendChar('=');
+            sendValue(rwAcc);
+            CRLF
+            
+            sendChar('l');
+            sendChar('w');
+            sendChar('=');
+            sendValue(lwAcc);
+        }
+    } else {
+        if (commTicks > 999) {
+            commTicks = 0;
+            sendChar('0' + _RB6);
+            CRLF;
+            //_RB6 = ~_RB6; // Fonctionne pas 2016-11-20
+        }
     }
 }
 
 void manageInterrupts() {
+    if (rwEncoderInt) {
+        rwEncoderInt = 0;
+        
+         if (currentCartState == RUNNING_MODE) {
+            rTicks += rwCurrentSpeed > 128 ? 1 : -1;
 
+            rwDeltaTime = rwAcc;
+            rwAcc = 0;
+
+            if (isCruiseControlled) {
+                if (rwCruiseTarget > nunchuck.jy) {
+                    if (rwCruiseDT != 0) {
+                        if (rwDeltaTime > rwCruiseDT) {
+                            ++OC4RS;
+                        } else {
+                            --OC4RS;
+                        }        
+                    }
+                }
+            }
+        } else if (currentCartState == CONFIG_MODE) {
+            rTicks++;
+            sendChar('i');
+            rwDeltaTime += rwAcc;
+            rwAcc = 0;
+            
+        }
+    }
+    
+    if (lwEncoderInt) {
+        lwEncoderInt = 0;
+        
+        
+        if (currentCartState == RUNNING_MODE) {
+            lTicks += lwCurrentSpeed > 128 ? 1 : -1;
+            //_RB6 = ~_RB6;    
+
+            lwDeltaTime = lwAcc;
+            lwAcc = 0;
+
+            if (isCruiseControlled) {
+                if (lwCruiseTarget > nunchuck.jy) {
+                    if (lwCruiseDT != 0) {
+                        if (lwDeltaTime > lwCruiseDT) {
+                            ++OC1RS;
+                        } else {
+                            --OC1RS;
+                        }        
+                    }
+                }
+            }
+        } else if (currentCartState == CONFIG_MODE) {
+            lTicks++;
+            lwDeltaTime += lwAcc;
+            lwAcc = 0;
+        }
+        
+    }
 }
 
 void Delai(int ms)
@@ -797,11 +899,6 @@ void initTRISx() {
     TRISB = 0x0004;
 }
 
-void testLed() {
-    if (rTicks > 100) {
-        _RB7 = ~_RB7;
-    }
-}
 
 // Source : http://www.microchip.com/forums/m481146.aspx
 // this routine found online somewhere, then tweaked
@@ -824,9 +921,11 @@ void testLed() {
      if (value < 0)                 // if it's negative, note that and take the absolute value
          value = -value;
      
+     char temp;
      do                             // write least significant digit of value that's left
      {
-         buffer[--c] = (value % 10) + '0';    
+         temp = (value % 10) + '0';
+         buffer[--c] = temp;
          value /= 10;
      } while (value);
  
@@ -836,14 +935,31 @@ void testLed() {
      return &buffer[c];
  }
  
+ // TODO : Delete
  void sendChars() {
     int i;
     for (i = 0; i < BUFFER_SIZE; i++) {
-        if (textBuffer[i] >= '0' && textBuffer[i] <= '9' || textBuffer[i] == '-') {
+        if (textBuffer[i] != 0){
+//        if (textBuffer[i] >= '0' && textBuffer[i] <= '9' || textBuffer[i] == '-') {
             sendChar(textBuffer[i]);
         }
     }
-    sendChar('\n');
     sendChar('\r');
+    sendChar('\n');
+    
     
 }
+ 
+ void sendValue (long value) {
+     textBuffer = itoa(value);
+     putsUART1(textBuffer);
+     CRLF;
+ }
+ 
+void putsUART1(unsigned int* buffer){   
+    char * temp_ptr = (char *) buffer;   
+    while(*temp_ptr != '\0')        {       
+        while(U1STAbits.UTXBF);  /* wait if the buffer is full */   
+         U1TXREG = *temp_ptr++;   /* transfer data byte to TX reg */          
+     }
+ }

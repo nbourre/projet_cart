@@ -98,6 +98,8 @@ void manageSystem(void);
 void manageComm(void);
 void manageInterrupts(void);
 
+
+// Cruise control variables
 int cruiseControlSpeed = 0;
 int isCruiseControlled = 0;
 int currentGasValue = 0;
@@ -111,7 +113,7 @@ long lwCruiseDT = 0;
 int lwCruiseTarget = 128;
 int lwEncoderInt = 0;
 int lwCurrentSpeed = 128;
-int lwAverage = 0;
+long lwAverage = 0;
 
 // Right wheel variables
 volatile long rTicks = 0;
@@ -121,10 +123,11 @@ long rwCruiseDT = 0;
 int rwCruiseTarget = 128;
 int rwEncoderInt = 0;
 int rwCurrentSpeed = 128;
-int rwAverage = 0; // Moyenne en ms du délai entre 2 ticks à 80%
+long rwAverage = 0; // Moyenne en ms du délai entre 2 ticks à 80% en E10x-6 s
+
+int rwSlower = 1; // Indique au système que la roue gauche doit s'ajuster
 
 
-volatile unsigned long nb_ms = 0;
 
 // Calibaration var
 int speedCalibFlag = 0;
@@ -162,6 +165,10 @@ char *textBuffer;
 int isOkToSend = 0;
 int commTicks = 0;
 
+
+// System variables
+volatile unsigned long nb_ms = 0;
+unsigned long runningTime = 0;
 
 int main(void) {
     initRPs();
@@ -289,9 +296,7 @@ void setOC1(int value) {
 /** Interruption sur encodeur gauche */
 void __attribute__((__interrupt__, auto_psv)) _INT1Interrupt(void) {
     // Code ici
-    lwEncoderInt = 1;
-    sendChar('l');
-    
+    lwEncoderInt = 1;    
     
     IFS1bits.INT1IF = 0;
 }
@@ -299,10 +304,6 @@ void __attribute__((__interrupt__, auto_psv)) _INT1Interrupt(void) {
 /** Interruption sur encodeur droit  */
 void __attribute__((__interrupt__, auto_psv)) _INT2Interrupt(void) {
     rwEncoderInt = 1;
-    sendChar('r');
-    
-    // TODO : ÇA N'INTERRUPTE PLUS!!
-   
     
     IFS1bits.INT2IF = 0;
 }
@@ -311,6 +312,8 @@ void __attribute__((__interrupt__, auto_psv)) _INT2Interrupt(void) {
 void _ISRFAST __attribute__((auto_psv)) _T1Interrupt(void)
 {
     if(nb_ms > 0)   --nb_ms;
+    runningTime++;
+    
     blinkAcc++;
     commTicks++;
     rwAcc++;
@@ -349,10 +352,11 @@ void __attribute__((__interrupt__, no_auto_psv)) _U1RXInterrupt(void)
 {
     rxChar = U1RXREG;   //Appel la fonction de lecture
     
-    _RB7 = ~_RB7;
+    
     
     if (rxChar == 'w') {
         forward = ~forward;
+        _RB7 = ~_RB7;
     }
     
     // Mettre en mode config
@@ -569,8 +573,9 @@ void modeRunning() {
     }
     
     if (forward) {
-        rightMotorSetSpeed(200);
-        leftMotorSetSpeed(200);
+        int speed = 200;
+        rightMotorSetSpeed(speed);
+        leftMotorSetSpeed(speed);
     } else {
         rightMotorStop();
         leftMotorStop();
@@ -633,12 +638,18 @@ void modeConfig() {
             allMotorStop();
              
             // Calculer le DT moyen des moteurs
-            rwAverage = (rwDeltaTime * 1.0) / rTicks;
-            lwAverage = (lwDeltaTime * 1.0) / lTicks;
+            // Diviser multiplier par 1000 étant donné que l'on travaille
+            // avec des longs
+            rwAverage = (rwDeltaTime * 1.0) / rTicks * 1000;
+            lwAverage = (lwDeltaTime * 1.0) / lTicks * 1000;
             
             isOkToSend = 1;
             
             
+        }
+        
+        if (speedCalibFlag == 0) {
+            rwSlower = rwAverage > lwAverage ? 1 : 0;
         }
     }
     
@@ -699,20 +710,17 @@ void manageComm() {
             sendChar('r');
             sendChar('w');
             sendChar('=');
-            sendValue(rwAcc);
-            CRLF
-            
+            sendValue(rwAverage);
             sendChar('l');
             sendChar('w');
             sendChar('=');
-            sendValue(lwAcc);
+            sendValue(lwAverage);
         }
     } else {
         if (commTicks > 999) {
             commTicks = 0;
-            sendChar('0' + _RB6);
-            CRLF;
-            //_RB6 = ~_RB6; // Fonctionne pas 2016-11-20
+            sendValue(runningTime);
+
         }
     }
 }
@@ -740,7 +748,6 @@ void manageInterrupts() {
             }
         } else if (currentCartState == CONFIG_MODE) {
             rTicks++;
-            sendChar('i');
             rwDeltaTime += rwAcc;
             rwAcc = 0;
             
@@ -895,8 +902,8 @@ void initTRISx() {
     AD1PCFG = 0xFFFF;
     TRISA = 0x0000;
     
-    //TRISB = 0xC004; // 14|15 pour int1|2 soit encRight, encLeft
-    TRISB = 0x0004;
+    TRISB = 0xC004; // 14|15 pour int1|2 soit encRight, encLeft
+
 }
 
 
@@ -961,5 +968,5 @@ void putsUART1(unsigned int* buffer){
     while(*temp_ptr != '\0')        {       
         while(U1STAbits.UTXBF);  /* wait if the buffer is full */   
          U1TXREG = *temp_ptr++;   /* transfer data byte to TX reg */          
-     }
- }
+    }
+}

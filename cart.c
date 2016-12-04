@@ -28,7 +28,8 @@ _CONFIG2(0x7987)
 typedef enum {
     RUNNING_MODE, 
     CRUISECONTROL_MODE,
-    CONFIG_MODE            
+    CONFIG_MODE,
+            IDLE_MODE,
 } cartState;
 
 cartState currentCartState = RUNNING_MODE;        
@@ -75,10 +76,12 @@ int leftMotorGetSpeed(void);
 void allMotorStop();
 void motorSetRawSpeeds(int);
 
+void setCartState(cartState);
+
 void sendChar(unsigned char);
 void sendChars();
 void sendValue (long value);
-void testLed(void);
+void sendCurrentState(void);
 void putsUART1(unsigned int*);
 
 // prototypes de la NUNCHUCK
@@ -91,6 +94,7 @@ void nunchuckSendToPC(void);
 void modeCruising(void);
 void modeRunning(void);
 void modeConfig(void);
+void modeIdle(void);
 void calibrate(void);
 
 void manageInputs(void);
@@ -164,6 +168,14 @@ int forward = 0;
 char *textBuffer;
 int isOkToSend = 0;
 int commTicks = 0;
+
+unsigned char rxStart = 0;
+unsigned char rxCount = 0;
+unsigned char rxBuffer[2];
+unsigned char isDataReady = 0;
+unsigned long rxAcc = 0;
+int rxChickenSwitch = 50;
+unsigned char rxOk = 1;
 
 
 // System variables
@@ -318,6 +330,7 @@ void _ISRFAST __attribute__((auto_psv)) _T1Interrupt(void)
     commTicks++;
     rwAcc++;
     lwAcc++;
+    rxAcc++;
     
     if (currentCartState == CONFIG_MODE) {
         if (speedCalibFlag) {
@@ -352,24 +365,22 @@ void __attribute__((__interrupt__, no_auto_psv)) _U1RXInterrupt(void)
 {
     rxChar = U1RXREG;   //Appel la fonction de lecture
     
-    
-    
-    if (rxChar == 'w') {
-        forward = ~forward;
-        _RB7 = ~_RB7;
+    if (rxAcc < rxChickenSwitch) {
+        rxAcc = 0;
     }
     
     // Mettre en mode config
     if (rxChar == 'c') {
         if (currentCartState == CONFIG_MODE ) {
-            currentCartState = RUNNING_MODE;
+            setCartState(RUNNING_MODE);
         } else {
-            currentCartState = CONFIG_MODE;
+            setCartState(CONFIG_MODE);
         }
     }
     
     if (currentCartState == CONFIG_MODE ) {
         if (rxChar == 's') {
+            rwDeltaTime = lwDeltaTime = 0;
             speedCalibFlag = 1;
             rTicks = 0;
             lTicks = 0;
@@ -377,7 +388,23 @@ void __attribute__((__interrupt__, no_auto_psv)) _U1RXInterrupt(void)
             lwAcc = 0;
         }
     } else if (currentCartState == RUNNING_MODE) {
-        
+        if (rxStart == 0) {
+            if (rxChar == 0x55) {
+                // 0x55 == 'U'
+                rxStart = 1;
+            }
+        } else {
+            rxBuffer[rxCount++] = rxChar;
+            
+            if (rxCount > 1) {
+                rxCount = 0;
+                rxStart = 0;
+                isDataReady = 1;
+            }
+        }
+    } else if (currentCartState == IDLE_MODE) {
+        rxOk = 1;
+        rxAcc = 0;
     }
     
     
@@ -460,6 +487,10 @@ void motorSetRawSpeeds(int value) {
     leftMotorSetSpeed(value);
 }
 
+void motorSetSpeed(int value) {
+    
+}
+
 /** Set the speed of the motor 
  * if value < 127 Rear, 0 <- fast 126 <- slow
  * value > 127 Forward 255 <- fast 128 <- slow
@@ -508,7 +539,7 @@ void modeCruising() {
         isCruiseControlled = 0;
         rightMotorStop();
         
-        currentCartState = RUNNING_MODE;
+        setCartState(RUNNING_MODE);
     }
     
     if (nunchuck.active) {
@@ -529,12 +560,27 @@ void modeCruising() {
     }
 }
 
+void modeIdle() {
+    if (rxOk) {
+        setCartState(RUNNING_MODE);
+    }
+}
+
 void modeRunning() {
+    
+    if (rxAcc > rxChickenSwitch) {
+        rxAcc = 0;
+        rxOk = 0;
+        
+        allMotorStop();
+        setCartState(IDLE_MODE);
+    }
+    
     // Transition vers etat de configuration
     if (btnCnZPressTime > 1000) {
         btnCnZPressTime = 0;
         
-        currentCartState = CONFIG_MODE;
+        setCartState(CONFIG_MODE);
         _RB7 = 1;
         _RB6 = 1;
         allMotorStop();
@@ -551,7 +597,7 @@ void modeRunning() {
         
         
         btnZPressTime = 0;
-        currentCartState = CRUISECONTROL_MODE;
+        setCartState(CRUISECONTROL_MODE);
         _RB7 = 1;
         _RB6 = 0;
         return;
@@ -572,15 +618,26 @@ void modeRunning() {
         }    
     }
     
+    
+
+    // Gestion des données reçues par RX
+    if (isDataReady) {
+        isDataReady = 0;
+        
+        if ((rxBuffer[0] == '!' && rxBuffer[1] == 'x') ||
+            (rxBuffer[0] == 0 && rxBuffer[1] == 0)) {
+            allMotorStop();
+        } else {
+            rightMotorSetSpeed(rxBuffer[0]);
+            leftMotorSetSpeed(rxBuffer[1]);
+        }
+    }
+    
     if (forward) {
         int speed = 200;
         rightMotorSetSpeed(speed);
         leftMotorSetSpeed(speed);
-    } else {
-        rightMotorStop();
-        leftMotorStop();
-    }
-    
+    }    
 }
 
 void calibrate() {
@@ -589,12 +646,17 @@ void calibrate() {
     slopeY = 1.0 * 256 / ((y_max - y_min) + 1);
 }
 
+void setCartState(cartState newState) {
+    currentCartState = newState;
+    sendCurrentState();
+}
+
 void modeConfig() {
     // Transition vers etat d'execution
     if (btnCnZPressTime > 1000) {
         btnCnZPressTime = 0;
         
-        currentCartState = RUNNING_MODE;
+        setCartState(RUNNING_MODE);
         return;
     }
     
@@ -687,6 +749,8 @@ void manageSystem() {
         case CONFIG_MODE:
             modeConfig();
             break;
+        case IDLE_MODE:
+            modeIdle();
         default:
             break;
     }
@@ -717,10 +781,10 @@ void manageComm() {
             sendValue(lwAverage);
         }
     } else {
+
         if (commTicks > 999) {
             commTicks = 0;
             sendValue(runningTime);
-
         }
     }
 }
@@ -783,6 +847,8 @@ void manageInterrupts() {
         }
         
     }
+    
+    
 }
 
 void Delai(int ms)
@@ -906,6 +972,32 @@ void initTRISx() {
 
 }
 
+void sendCurrentState() {
+    switch (currentCartState) {
+        case RUNNING_MODE:
+            sendChar('R');
+            sendChar('M');
+            CRLF
+            break;
+        case IDLE_MODE:
+            sendChar('I');
+            sendChar('M');
+            CRLF
+            break;
+        case CONFIG_MODE:
+            sendChar('C');
+            sendChar('M');
+            CRLF
+            break;
+        case CRUISECONTROL_MODE:
+            sendChar('C');
+            sendChar('C');
+            sendChar('M');
+            CRLF
+            break;
+    }
+}
+
 
 // Source : http://www.microchip.com/forums/m481146.aspx
 // this routine found online somewhere, then tweaked
@@ -966,7 +1058,7 @@ void initTRISx() {
 void putsUART1(unsigned int* buffer){   
     char * temp_ptr = (char *) buffer;   
     while(*temp_ptr != '\0')        {       
-        while(U1STAbits.UTXBF);  /* wait if the buffer is full */   
+        while(U1STAbits.UTXBF);  /* wait if the buffer is full */
          U1TXREG = *temp_ptr++;   /* transfer data byte to TX reg */          
     }
 }

@@ -177,6 +177,7 @@ unsigned long rxAcc = 0;
 int rxChickenSwitch = 50;
 unsigned char rxOk = 1;
 
+int blinkIdleDelay = 100;
 
 // System variables
 volatile unsigned long nb_ms = 0;
@@ -367,6 +368,7 @@ void __attribute__((__interrupt__, no_auto_psv)) _U1RXInterrupt(void)
     
     if (rxAcc < rxChickenSwitch) {
         rxAcc = 0;
+        rxOk = 1;
     }
     
     // Mettre en mode config
@@ -405,6 +407,8 @@ void __attribute__((__interrupt__, no_auto_psv)) _U1RXInterrupt(void)
     } else if (currentCartState == IDLE_MODE) {
         rxOk = 1;
         rxAcc = 0;
+        rxStart = 0;
+        rxCount = 0;
     }
     
     
@@ -564,6 +568,12 @@ void modeIdle() {
     if (rxOk) {
         setCartState(RUNNING_MODE);
     }
+    
+    if (blinkAcc > blinkIdleDelay) {
+        blinkAcc = 0;
+        _RB7 = ~_RB7;
+        _RB6 = ~_RB6;
+    }
 }
 
 void modeRunning() {
@@ -573,7 +583,12 @@ void modeRunning() {
         rxOk = 0;
         
         allMotorStop();
+        
+        _RB6 = 1;
+        _RB7 = 0;
+        
         setCartState(IDLE_MODE);
+        
     }
     
     // Transition vers etat de configuration
@@ -715,23 +730,6 @@ void modeConfig() {
         }
     }
     
-//    if (newVal) {
-//        newVal = 0;
-//        calibrate();
-//        isOkToSend = 1;
-//    }
-//    
-//    if (isOkToSend) {
-//        isOkToSend = 0;
-//        
-//        sendChar('m'); sendChar('i'); sendChar('n'); sendChar('=');
-//        textBuffer = itoa(y_min);
-//        sendChars();
-//        
-//        sendChar('m'); sendChar('a'); sendChar('x'); sendChar('=');
-//        textBuffer = itoa(y_max);
-//        sendChars();
-//    }
 }
 
 void manageSystem() {

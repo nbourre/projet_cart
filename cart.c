@@ -30,6 +30,7 @@ typedef enum {
     CRUISECONTROL_MODE,
     CONFIG_MODE,
             IDLE_MODE,
+            AUTO_MODE,
 } cartState;
 
 cartState currentCartState = RUNNING_MODE;        
@@ -196,7 +197,7 @@ int main(void) {
     hiRangeRatio = 128.0 / (y_max - y_mid);
 
     
-    nunchuckInit();
+    //nunchuckInit();
 
     allMotorStop();
 
@@ -204,7 +205,7 @@ int main(void) {
 
         manageInterrupts();
         
-        manageInputs();
+        //manageInputs();
         manageSystem();
         manageComm();
 
@@ -339,23 +340,23 @@ void _ISRFAST __attribute__((auto_psv)) _T1Interrupt(void)
         }
     }
     
-    if (nunchuck.bc && nunchuck.bz) {
-        btnCnZPressTime++;
-    } else {
-        btnCnZPressTime = 0;
-    }
-    
-    if (nunchuck.bz) {
-        btnZPressTime++;
-    } else {
-        btnZPressTime = 0;
-    }
-    
-    if (nunchuck.bc) {
-        btnCPressTime++;
-    } else {
-        btnCPressTime = 0;
-    }
+//    if (nunchuck.bc && nunchuck.bz) {
+//        btnCnZPressTime++;
+//    } else {
+//        btnCnZPressTime = 0;
+//    }
+//    
+//    if (nunchuck.bz) {
+//        btnZPressTime++;
+//    } else {
+//        btnZPressTime = 0;
+//    }
+//    
+//    if (nunchuck.bc) {
+//        btnCPressTime++;
+//    } else {
+//        btnCPressTime = 0;
+//    }
     
     
     
@@ -371,24 +372,16 @@ void __attribute__((__interrupt__, no_auto_psv)) _U1RXInterrupt(void)
         rxOk = 1;
     }
     
-    // Mettre en mode config
-    if (rxChar == 'c') {
-        if (currentCartState == CONFIG_MODE ) {
-            setCartState(RUNNING_MODE);
-        } else {
-            setCartState(CONFIG_MODE);
-        }
-    }
     
     if (currentCartState == CONFIG_MODE ) {
-        if (rxChar == 's') {
-            rwDeltaTime = lwDeltaTime = 0;
-            speedCalibFlag = 1;
-            rTicks = 0;
-            lTicks = 0;
-            rwAcc = 0;
-            lwAcc = 0;
-        }
+//        if (rxChar == 's') {
+//            rwDeltaTime = lwDeltaTime = 0;
+//            speedCalibFlag = 1;
+//            rTicks = 0;
+//            lTicks = 0;
+//            rwAcc = 0;
+//            lwAcc = 0;
+//        }
     } else if (currentCartState == RUNNING_MODE) {
         if (rxStart == 0) {
             if (rxChar == 0x55) {
@@ -576,6 +569,23 @@ void modeIdle() {
     }
 }
 
+void modeAuto() {
+    
+    if (rTicks < 238) {
+        rightMotorSetSpeed(60);
+        leftMotorSetSpeed(60);
+    } else {
+        allMotorStop();
+        setCartState(RUNNING_MODE);
+    }
+    
+    if (blinkAcc > 250) {
+        blinkAcc = 0;
+        _RB7 = ~_RB7;
+        _RB6 = ~_RB6;
+    }
+}
+
 void modeRunning() {
     
     if (rxAcc > rxChickenSwitch) {
@@ -587,53 +597,8 @@ void modeRunning() {
         _RB6 = 1;
         _RB7 = 0;
         
-        setCartState(IDLE_MODE);
-        
-    }
-    
-    // Transition vers etat de configuration
-    if (btnCnZPressTime > 1000) {
-        btnCnZPressTime = 0;
-        
-        setCartState(CONFIG_MODE);
-        _RB7 = 1;
-        _RB6 = 1;
-        allMotorStop();
-    }
-    
-    if (btnZPressTime > 250) {
-        isCruiseControlled = 1;
-        
-        rwCruiseDT = rwDeltaTime;
-        lwCruiseDT = lwDeltaTime;
-        
-        rwCruiseTarget = rightMotorGetSpeed();
-        lwCruiseTarget = leftMotorGetSpeed();
-        
-        
-        btnZPressTime = 0;
-        setCartState(CRUISECONTROL_MODE);
-        _RB7 = 1;
-        _RB6 = 0;
-        return;
-    }
-    
-    if (nunchuck.active) {
-        if (nunchuck.jy - y_mid < 5 && nunchuck.jy - y_mid > -5 ) {
-            rightMotorStop();
-            leftMotorStop();
-        } else {
-            if (nunchuck.jy > y_mid) {
-                rightMotorSetSpeed(nunchuck.jy * hiRangeRatio);
-                leftMotorSetSpeed(nunchuck.jy * hiRangeRatio);
-            } else {
-                rightMotorSetSpeed(nunchuck.jy * lowRangeRatio);
-                leftMotorSetSpeed(nunchuck.jy * lowRangeRatio);
-            }
-        }    
-    }
-    
-    
+        setCartState(IDLE_MODE);       
+    }   
 
     // Gestion des données reçues par RX
     if (isDataReady) {
@@ -642,24 +607,28 @@ void modeRunning() {
         if ((rxBuffer[0] == '!' && rxBuffer[1] == 'x') ||
             (rxBuffer[0] == 0 && rxBuffer[1] == 0)) {
             allMotorStop();
-        } else {
+            rTicks = 0;
+            lTicks = 0;
+            _RB6 = 1;
+            _RB7 = 0;
+            setCartState(AUTO_MODE);
+        } 
+
+        else {
             rightMotorSetSpeed(rxBuffer[0]);
             leftMotorSetSpeed(rxBuffer[1]);
         }
+        
+        
+        rxBuffer[0] = rxBuffer[0] = 128;
     }
-    
-    if (forward) {
-        int speed = 200;
-        rightMotorSetSpeed(speed);
-        leftMotorSetSpeed(speed);
-    }    
 }
 
-void calibrate() {
-    slopeX = 1.0 * 256 / ((x_max - x_min) + 1);
-    
-    slopeY = 1.0 * 256 / ((y_max - y_min) + 1);
-}
+//void calibrate() {
+//    slopeX = 1.0 * 256 / ((x_max - x_min) + 1);
+//    
+//    slopeY = 1.0 * 256 / ((y_max - y_min) + 1);
+//}
 
 void setCartState(cartState newState) {
     currentCartState = newState;
@@ -667,13 +636,13 @@ void setCartState(cartState newState) {
 }
 
 void modeConfig() {
-    // Transition vers etat d'execution
-    if (btnCnZPressTime > 1000) {
-        btnCnZPressTime = 0;
-        
-        setCartState(RUNNING_MODE);
-        return;
-    }
+//    // Transition vers etat d'execution
+//    if (btnCnZPressTime > 1000) {
+//        btnCnZPressTime = 0;
+//        
+//        setCartState(RUNNING_MODE);
+//        return;
+//    }
     
     // Faire clignoter les leds pour indiquer le mode calibration
     if (blinkAcc > 500) {
@@ -682,29 +651,29 @@ void modeConfig() {
         _RB6 = ~_RB6;
     }
     
-    int dirtyValues = 0;
+//    int dirtyValues = 0;
     
-    if (nunchuck.active) {
-        if (nunchuck.jx < x_min) {
-            x_min = nunchuck.jx;
-            dirtyValues = 1;
-        }
-
-        if (nunchuck.jx > x_max) {
-            x_max = nunchuck.jx;
-            dirtyValues = 1;
-        }
-
-        if (nunchuck.jy < y_min) {
-            y_min = nunchuck.jy;
-            dirtyValues = 1;
-        }
-
-        if (nunchuck.jy > y_max) {
-            y_max = nunchuck.jy;
-            dirtyValues = 1;
-        }
-    }
+//    if (nunchuck.active) {
+//        if (nunchuck.jx < x_min) {
+//            x_min = nunchuck.jx;
+//            dirtyValues = 1;
+//        }
+//
+//        if (nunchuck.jx > x_max) {
+//            x_max = nunchuck.jx;
+//            dirtyValues = 1;
+//        }
+//
+//        if (nunchuck.jy < y_min) {
+//            y_min = nunchuck.jy;
+//            dirtyValues = 1;
+//        }
+//
+//        if (nunchuck.jy > y_max) {
+//            y_max = nunchuck.jy;
+//            dirtyValues = 1;
+//        }
+//    }
     
     if (speedCalibFlag) {
         motorSetRawSpeeds(SPEED_MAX * 0.90);
@@ -737,6 +706,8 @@ void manageSystem() {
     rwCurrentSpeed = rightMotorGetSpeed();
     lwCurrentSpeed = leftMotorGetSpeed();
     
+
+    
     switch (currentCartState) {
         case CRUISECONTROL_MODE:
             modeCruising();
@@ -749,6 +720,8 @@ void manageSystem() {
             break;
         case IDLE_MODE:
             modeIdle();
+        case AUTO_MODE:
+            modeAuto();
         default:
             break;
     }
@@ -813,6 +786,10 @@ void manageInterrupts() {
             rwDeltaTime += rwAcc;
             rwAcc = 0;
             
+        } else if (currentCartState == AUTO_MODE) {
+            rTicks++;
+            rwDeltaTime += rwAcc;
+            rwAcc = 0;
         }
     }
     
@@ -839,6 +816,10 @@ void manageInterrupts() {
                 }
             }
         } else if (currentCartState == CONFIG_MODE) {
+            lTicks++;
+            lwDeltaTime += lwAcc;
+            lwAcc = 0;
+        } else if (currentCartState == AUTO_MODE) {
             lTicks++;
             lwDeltaTime += lwAcc;
             lwAcc = 0;

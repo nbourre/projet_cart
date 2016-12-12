@@ -105,7 +105,7 @@ long rwAverage = 0; // Moyenne en ms du délai entre 2 ticks à 80% en E10x-6 s
 int rwSlower = 1; // Indique au système que la roue gauche doit s'ajuster
 
 // Auto-mode variables
-int ticksToGoal = 244;
+int ticksToGoal = 240;
 int amStartSpeed = 60;
 int amRampAcc = 0;
 int amRampDelay = 10; // 
@@ -518,10 +518,10 @@ void modeAuto() {
         if (amRampAcc > amRampDelay) {
             amRampAcc = 0;
             
-            if (rTicks - 25 < ticksToGoal >> 1) {
+            if (rTicks  < ticksToGoal >> 1) {
                 if (amStartSpeed > 0) amStartSpeed--;
             } else {
-                if (amStartSpeed < 90) amStartSpeed++;
+                if (amStartSpeed < 80) amStartSpeed++;
             }
         }
         

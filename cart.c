@@ -8,16 +8,11 @@
 
 #include <xc.h>
 
-#include "I2C.h"
-#include <stdlib.h>
-
-//#include "nunchuck.h"
 
 #define MAX_UNSIGNED_LONG 4294967295
 #define PWM_DC_MAX 2048
 #define NC_DATA_LENGTH 6
 #define BUFFER_SIZE 12
-#define LOCAL_NUNCHUCK 0
 #define SPEED_MAX 256
 #define CRLF sendChar('\r');sendChar('\n');
 
@@ -35,23 +30,7 @@ typedef enum {
 
 cartState currentCartState = RUNNING_MODE;        
 
-struct Nunchuck {
-    int active;
-    // Axes x, y, z
-    int az; 
-    int ay;
-    int ax;
-    
-    // Joystick x, y
-    unsigned char jy;
-    unsigned char jx;
-    
-    // Button Z, C
-    int bz;
-    int bc;
-};
 
-volatile struct Nunchuck nunchuck;
         
 // prototypes helpers
 void initRPs(void);
@@ -85,11 +64,6 @@ void sendValue (long value);
 void sendCurrentState(void);
 void putsUART1(char*);
 
-// prototypes de la NUNCHUCK
-void nunchuckInit(void);
-void nunchuckUpdate(void);
-struct Nunchuck nunchuckConvertRawData(unsigned char*);
-void nunchuckSendToPC(void);
 
 // prototypes du système
 void modeCruising(void);
@@ -97,7 +71,6 @@ void modeRunning(void);
 void modeConfig(void);
 void modeIdle(void);
 
-void manageInputs(void);
 void manageSystem(void);
 void manageComm(void);
 void manageInterrupts(void);
@@ -517,16 +490,6 @@ void modeCruising() {
         setCartState(RUNNING_MODE);
     }
     
-    if (nunchuck.active) {
-        if (rwCruiseTarget < nunchuck.jy) {
-            rightMotorSetSpeed(nunchuck.jy * hiRangeRatio);
-        }
-
-        if (lwCruiseTarget < nunchuck.jy) {
-            leftMotorSetSpeed(nunchuck.jy * hiRangeRatio);
-        }
-    }
-    
     
     if (blinkAcc > 100) {
         blinkAcc = 0;
@@ -624,13 +587,6 @@ void setCartState(cartState newState) {
 }
 
 void modeConfig() {
-//    // Transition vers etat d'execution
-//    if (btnCnZPressTime > 1000) {
-//        btnCnZPressTime = 0;
-//        
-//        setCartState(RUNNING_MODE);
-//        return;
-//    }
     
     // Faire clignoter les leds pour indiquer le mode calibration
     if (blinkAcc > 500) {
@@ -639,29 +595,6 @@ void modeConfig() {
         _RB6 = ~_RB6;
     }
     
-//    int dirtyValues = 0;
-    
-//    if (nunchuck.active) {
-//        if (nunchuck.jx < x_min) {
-//            x_min = nunchuck.jx;
-//            dirtyValues = 1;
-//        }
-//
-//        if (nunchuck.jx > x_max) {
-//            x_max = nunchuck.jx;
-//            dirtyValues = 1;
-//        }
-//
-//        if (nunchuck.jy < y_min) {
-//            y_min = nunchuck.jy;
-//            dirtyValues = 1;
-//        }
-//
-//        if (nunchuck.jy > y_max) {
-//            y_max = nunchuck.jy;
-//            dirtyValues = 1;
-//        }
-//    }
     
     if (speedCalibFlag) {
         motorSetRawSpeeds(SPEED_MAX * 0.90);
@@ -716,15 +649,6 @@ void manageSystem() {
     }
 }
 
-void manageInputs() {
-#if LOCAL_NUNCHUCK
-    nunchuckUpdate();
-
-    nunchuckSendToPC();
-
-    nunchuck = nunchuckConvertRawData(nc_data);
-#endif            
-}
 
 void manageComm() {
     if (currentCartState == CONFIG_MODE) {
@@ -760,15 +684,15 @@ void manageInterrupts() {
             rwAcc = 0;
 
             if (isCruiseControlled) {
-                if (rwCruiseTarget > nunchuck.jy) {
-                    if (rwCruiseDT != 0) {
-                        if (rwDeltaTime > rwCruiseDT) {
-                            ++OC4RS;
-                        } else {
-                            --OC4RS;
-                        }        
-                    }
-                }
+//                if (rwCruiseTarget > nunchuck.jy) {
+//                    if (rwCruiseDT != 0) {
+//                        if (rwDeltaTime > rwCruiseDT) {
+//                            ++OC4RS;
+//                        } else {
+//                            --OC4RS;
+//                        }        
+//                    }
+//                }
             }
         } else if (currentCartState == CONFIG_MODE) {
             rTicks++;
@@ -794,15 +718,15 @@ void manageInterrupts() {
             lwAcc = 0;
 
             if (isCruiseControlled) {
-                if (lwCruiseTarget > nunchuck.jy) {
-                    if (lwCruiseDT != 0) {
-                        if (lwDeltaTime > lwCruiseDT) {
-                            ++OC1RS;
-                        } else {
-                            --OC1RS;
-                        }        
-                    }
-                }
+//                if (lwCruiseTarget > nunchuck.jy) {
+//                    if (lwCruiseDT != 0) {
+//                        if (lwDeltaTime > lwCruiseDT) {
+//                            ++OC1RS;
+//                        } else {
+//                            --OC1RS;
+//                        }        
+//                    }
+//                }
             }
         } else if (currentCartState == CONFIG_MODE) {
             lTicks++;
@@ -825,69 +749,6 @@ void Delai(int ms)
   while(nb_ms > 0);
 }
 
-void nunchuckInit() {
-    nunchuck.active = LOCAL_NUNCHUCK;
-#if LOCAL_NUNCHUCK
-    I2C_Initialisation();
-        
-    Delai(50);
-    
-    I2C_ConditionDemarrage();
-    I2C_Adresse(0x52, 0);
-    I2C_EnvoiOctet(0xF0);       // Sequence compatible aux deux modeles sans encodage
-    I2C_EnvoiOctet(0x55);
-    I2C_ConditionArret();
-    
-    Delai(10);
-    
-    I2C_ConditionDemarrage();
-    I2C_Adresse(0x52, 1);
-    I2C_LireOctets(nc_data, NC_DATA_LENGTH);
-    I2C_ConditionArret();
-    
-#endif
-}
-
-void nunchuckUpdate() {
-    Delai(1);
-    
-    I2C_ConditionDemarrage();
-    I2C_Adresse(0x52, 0);
-    I2C_EnvoiOctet(0x00);
-    I2C_ConditionArret();
-    
-    Delai(1);
-    
-    I2C_ConditionDemarrage();
-    I2C_Adresse(0x52, 1);
-    I2C_LireOctets(nc_data,6);
-    I2C_ConditionArret();
-    
-}
-
-struct Nunchuck nunchuckConvertRawData(unsigned char data[6]) {
-    struct Nunchuck result;   
-    
-//    jx = donnees[0];
-//    jy = donnees[1];
-//    ax = (donnees[2] << 2) + ((donnees[5] & 0x0C) >> 2);
-//    ay = (donnees[3] << 2) + ((donnees[5] & 0x30) >> 4);    
-//    az = (donnees[4] << 2) + ((donnees[5] & 0xC0) >> 6);
-//    
-//    bz = !(donnees[5] & 0x01);
-//    bc = !((donnees[5] & 0x02) >> 1);
-        
-    result.jx = data[0];
-    result.jy = data[1];
-    result.ax = (data[2] << 2) + ((data[5] & 0x0C) >> 2);
-    result.ay = (data[3] << 2) + ((data[5] & 0x30) >> 4);    
-    result.az = (data[4] << 2) + ((data[5] & 0xC0) >> 6);
-    
-    result.bz = !(data[5] & 0x01);
-    result.bc = !((data[5] & 0x02) >> 1);
-    
-    return result;
-}
 
 
 void sendChar(unsigned char c)
@@ -909,14 +770,6 @@ void nunchuckSendToPC() {
 }
 
 void initRxTx() {
-#if LOCAL_NUNCHUCK
-    // Configuration du port série (UART)
-    U1BRG  = 16;	// BRGH=1 16=115200
-    U1STA  = 0x2000;	// Interruption à chaque caractère reçu
-    U1MODE = 0x8008;	// BRGH = 1
-
-    U1STAbits.UTXEN = 1;
-#else
     // Configuration du port série (UART)
     U1BRG  = 51; // 
     //U1BRG = 0;
@@ -929,7 +782,7 @@ void initRxTx() {
     _U1RXIP = 2; // Priorite
     _U1RXIF = 0;
     _U1RXIE = 1; 
-#endif
+
 }
 
 void initTRISx() {

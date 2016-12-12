@@ -83,7 +83,7 @@ void sendChar(unsigned char);
 void sendChars();
 void sendValue (long value);
 void sendCurrentState(void);
-void putsUART1(unsigned int*);
+void putsUART1(char*);
 
 // prototypes de la NUNCHUCK
 void nunchuckInit(void);
@@ -96,7 +96,6 @@ void modeCruising(void);
 void modeRunning(void);
 void modeConfig(void);
 void modeIdle(void);
-void calibrate(void);
 
 void manageInputs(void);
 void manageSystem(void);
@@ -108,7 +107,7 @@ void manageInterrupts(void);
 int cruiseControlSpeed = 0;
 int isCruiseControlled = 0;
 int currentGasValue = 0;
-int setNewSpeed = 0;
+
 
 // Left wheel variables
 volatile long lTicks = 0;
@@ -132,7 +131,11 @@ long rwAverage = 0; // Moyenne en ms du délai entre 2 ticks à 80% en E10x-6 s
 
 int rwSlower = 1; // Indique au système que la roue gauche doit s'ajuster
 
-
+// Auto-mode variables
+int ticksToGoal = 244;
+int amStartSpeed = 60;
+int amRampAcc = 0;
+int amRampDelay = 10; // 
 
 // Calibaration var
 int speedCalibFlag = 0;
@@ -197,17 +200,23 @@ int main(void) {
     hiRangeRatio = 128.0 / (y_max - y_mid);
 
     
-    //nunchuckInit();
 
     allMotorStop();
+    
+    int calibRun = 5;
 
     while (1) {
-
-        manageInterrupts();
         
-        //manageInputs();
-        manageSystem();
-        manageComm();
+        if (calibRun > 0) {
+            calibRun--;
+            allMotorStop();
+        } else {
+
+            manageInterrupts();
+
+            manageSystem();
+            manageComm();
+        }
 
 
     }
@@ -327,7 +336,6 @@ void _ISRFAST __attribute__((auto_psv)) _T1Interrupt(void)
 {
     if(nb_ms > 0)   --nb_ms;
     runningTime++;
-    
     blinkAcc++;
     commTicks++;
     rwAcc++;
@@ -338,25 +346,9 @@ void _ISRFAST __attribute__((auto_psv)) _T1Interrupt(void)
         if (speedCalibFlag) {
             speedCalibAcc++;
         }
+    } else if (currentCartState == AUTO_MODE) {
+        amRampAcc++;
     }
-    
-//    if (nunchuck.bc && nunchuck.bz) {
-//        btnCnZPressTime++;
-//    } else {
-//        btnCnZPressTime = 0;
-//    }
-//    
-//    if (nunchuck.bz) {
-//        btnZPressTime++;
-//    } else {
-//        btnZPressTime = 0;
-//    }
-//    
-//    if (nunchuck.bc) {
-//        btnCPressTime++;
-//    } else {
-//        btnCPressTime = 0;
-//    }
     
     
     
@@ -398,7 +390,6 @@ void __attribute__((__interrupt__, no_auto_psv)) _U1RXInterrupt(void)
             }
         }
     } else if (currentCartState == IDLE_MODE) {
-        rxOk = 1;
         rxAcc = 0;
         rxStart = 0;
         rxCount = 0;
@@ -419,19 +410,6 @@ void rightMotorSetSpeed(int value) {
     
     int pwm = PWM_DC_MAX;
     
-    /** Correction de la valeur*/
-//    int diff = value - y_mid;
-//    int corrValue = value;
-//    
-//    if (diff > -10 || diff < 10) {
-//        corrValue = 128;
-//    } else {
-//        if (diff < 0) {
-//            corrValue = lowRangeRatio * value;
-//        } else {
-//            corrValue = hiRangeRatio * value;
-//        }     
-//    }
     
     if (value < 128) {
         // REVERSE
@@ -562,6 +540,8 @@ void modeIdle() {
         setCartState(RUNNING_MODE);
     }
     
+    allMotorStop();
+    
     if (blinkAcc > blinkIdleDelay) {
         blinkAcc = 0;
         _RB7 = ~_RB7;
@@ -571,10 +551,21 @@ void modeIdle() {
 
 void modeAuto() {
     
-    if (rTicks < 238) {
-        rightMotorSetSpeed(60);
-        leftMotorSetSpeed(60);
+    if (rTicks < ticksToGoal) {
+        if (amRampAcc > amRampDelay) {
+            amRampAcc = 0;
+            
+            if (rTicks - 25 < ticksToGoal >> 1) {
+                if (amStartSpeed > 0) amStartSpeed--;
+            } else {
+                if (amStartSpeed < 90) amStartSpeed++;
+            }
+        }
+        
+        rightMotorSetSpeed(amStartSpeed);
+        leftMotorSetSpeed(amStartSpeed);
     } else {
+        rTicks = 0;
         allMotorStop();
         setCartState(RUNNING_MODE);
     }
@@ -607,10 +598,11 @@ void modeRunning() {
         if ((rxBuffer[0] == '!' && rxBuffer[1] == 'x') ||
             (rxBuffer[0] == 0 && rxBuffer[1] == 0)) {
             allMotorStop();
-            rTicks = 0;
+            rTicks = 0; 
             lTicks = 0;
             _RB6 = 1;
             _RB7 = 0;
+            amRampAcc = 0;
             setCartState(AUTO_MODE);
         } 
 
@@ -620,15 +612,11 @@ void modeRunning() {
         }
         
         
-        rxBuffer[0] = rxBuffer[0] = 128;
+        rxBuffer[0] = rxBuffer[1] = 128;
     }
 }
 
-//void calibrate() {
-//    slopeX = 1.0 * 256 / ((x_max - x_min) + 1);
-//    
-//    slopeY = 1.0 * 256 / ((y_max - y_min) + 1);
-//}
+
 
 void setCartState(cartState newState) {
     currentCartState = newState;
@@ -720,6 +708,7 @@ void manageSystem() {
             break;
         case IDLE_MODE:
             modeIdle();
+            break;
         case AUTO_MODE:
             modeAuto();
         default:
@@ -954,23 +943,37 @@ void initTRISx() {
 void sendCurrentState() {
     switch (currentCartState) {
         case RUNNING_MODE:
-            sendChar('R');
             sendChar('M');
+            sendChar('R');
+            sendChar('U');
+            sendChar('N');
             CRLF
             break;
         case IDLE_MODE:
-            sendChar('I');
             sendChar('M');
+            sendChar('I');
+            sendChar('D');
+            sendChar('L');
             CRLF
             break;
         case CONFIG_MODE:
-            sendChar('C');
             sendChar('M');
+            sendChar('C');
+            sendChar('F');
+            sendChar('G');            
             CRLF
             break;
         case CRUISECONTROL_MODE:
+            sendChar('M');
             sendChar('C');
             sendChar('C');
+            sendChar('T');
+            sendChar('R');
+            sendChar('L');
+            CRLF
+            break;
+        case AUTO_MODE:
+            sendChar('A');
             sendChar('M');
             CRLF
             break;
@@ -1034,8 +1037,8 @@ void sendCurrentState() {
      CRLF;
  }
  
-void putsUART1(unsigned int* buffer){   
-    char * temp_ptr = (char *) buffer;   
+void putsUART1(char* buffer){   
+    char * temp_ptr =  buffer;   
     while(*temp_ptr != '\0')        {       
         while(U1STAbits.UTXBF);  /* wait if the buffer is full */
          U1TXREG = *temp_ptr++;   /* transfer data byte to TX reg */          
